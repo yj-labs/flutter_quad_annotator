@@ -1,107 +1,23 @@
-import 'package:flutter/material.dart' as flutter;
-import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
-import 'dart:ui' as ui;
 import 'dart:async';
+import 'dart:ui' as ui;
+
+import 'package:flutter/material.dart';
+
+
+import 'types.dart';
+import 'gesture_recognizer.dart';
+import 'quadrilateral_painter.dart';
 import 'rectangle_feature.dart';
-
-/// 单点触控拖拽手势识别器
-/// 只允许第一个触摸点进行拖拽操作，忽略后续的触摸点
-class _SingleTouchPanGestureRecognizer extends PanGestureRecognizer {
-  int? _activePointer;
-
-  @override
-  void addAllowedPointer(PointerDownEvent event) {
-    // 如果已经有活跃的触摸点，忽略新的触摸点
-    if (_activePointer != null) {
-      return;
-    }
-    
-    _activePointer = event.pointer;
-    super.addAllowedPointer(event);
-  }
-
-  @override
-  void handleEvent(PointerEvent event) {
-    // 只处理活跃触摸点的事件
-    if (event.pointer == _activePointer) {
-      super.handleEvent(event);
-      
-      // 如果触摸点抬起，重置活跃触摸点
-      if (event is PointerUpEvent || event is PointerCancelEvent) {
-        _activePointer = null;
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _activePointer = null;
-    super.dispose();
-  }
-}
-
-/// 放大镜位置模式
-enum MagnifierPositionMode {
-  /// 放大镜圆心在手势点击位置（默认模式）
-  center,
-  /// 放大镜固定在四个角之一
-  corner,
-  /// 放大镜边缘在手势点击位置，有偏移避免遮挡
-  edge,
-}
-
-/// 放大镜角落位置
-enum MagnifierCornerPosition {
-  /// 左上角
-  topLeft,
-  /// 右上角
-  topRight,
-  /// 左下角
-  bottomLeft,
-  /// 右下角
-  bottomRight,
-}
-
-/// 放大镜形状
-enum MagnifierShape {
-  circle,
-  rectangle,
-}
-
-/// 四边形裁剪组件的回调函数类型定义
-typedef OnVerticesChanged = void Function(RectangleFeature rectangle);
-
-/// 顶点拖动开始时的回调函数类型定义
-typedef OnVertexDragStart = void Function(int vertexIndex, Offset position);
-
-/// 顶点拖动结束时的回调函数类型定义
-typedef OnVertexDragEnd = void Function(int vertexIndex, Offset position);
-
-/// 边拖动开始时的回调函数类型定义
-typedef OnEdgeDragStart = void Function(int edgeIndex, Offset position);
-
-/// 边拖动结束时的回调函数类型定义
-typedef OnEdgeDragEnd = void Function(int edgeIndex, Offset position);
-
-/// 图片信息类，包含图片的真实尺寸和显示尺寸
-class QuadImageInfo {
-  final Size realSize;    // 图片真实尺寸
-  final Size displaySize; // 图片显示尺寸
-  final Offset offset;    // 图片在容器中的偏移量
-  
-  const QuadImageInfo({
-    required this.realSize,
-    required this.displaySize,
-    required this.offset,
-  });
-}
+import 'utils/coordinate_utils.dart';
+import 'utils/geometry_utils.dart';
+import 'utils/magnifier_utils.dart';
+import 'utils/image_utils.dart';
 
 /// 四边形裁剪组件State类型定义（用于GlobalKey）
 typedef QuadAnnotatorBoxState = _QuadAnnotatorBoxState;
 
-/// 四边形裁剪组件
-/// 支持在图片上绘制可拖动的四边形选区
+/// 四边形标注组件
+/// 支持在图片上绘制和编辑四边形区域
 class QuadAnnotatorBox extends StatefulWidget {
   /// 背景图片对象（用于显示和获取真实尺寸）
   final ui.Image? image;
@@ -350,83 +266,15 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox> with TickerProvider
   /// [sourcePosition] 源位置（图片坐标系）
   /// 返回放大镜应该显示的位置
   Offset _calculateMagnifierPosition(Offset gesturePosition, Offset sourcePosition) {
-    switch (widget.magnifierPositionMode) {
-      case MagnifierPositionMode.center:
-        // 模式1：放大镜圆心在手势位置（默认模式）
-        return gesturePosition;
-        
-      case MagnifierPositionMode.corner:
-        // 模式2：放大镜固定在四个角之一
-        return _getCornerPosition();
-        
-      case MagnifierPositionMode.edge:
-        // 模式3：放大镜边缘在手势位置，有偏移避免遮挡
-        return _getEdgePosition(gesturePosition);
-    }
-  }
-
-  /// 获取角落位置
-  Offset _getCornerPosition() {
-    final double radius = widget.magnifierRadius;
-    final double margin = widget.magnifierEdgeOffset;
-    
-    switch (widget.magnifierCornerPosition) {
-      case MagnifierCornerPosition.topLeft:
-        return Offset(radius + margin, radius + margin);
-      case MagnifierCornerPosition.topRight:
-        return Offset(widget.width - radius - margin, radius + margin);
-      case MagnifierCornerPosition.bottomLeft:
-        return Offset(radius + margin, widget.height - radius - margin);
-      case MagnifierCornerPosition.bottomRight:
-        return Offset(widget.width - radius - margin, widget.height - radius - margin);
-    }
-  }
-
-  /// 获取边缘位置（参考flutter_magnifier库的实现）
-  Offset _getEdgePosition(Offset gesturePosition) {
-    final double radius = widget.magnifierRadius;
-    final double offset = widget.magnifierEdgeOffset;
-    final Size widgetSize = Size(widget.width, widget.height);
-    
-    // 计算Y坐标：让放大镜底部与手势位置齐平
-    double adjustedY = gesturePosition.dy - radius;
-    
-    // 默认尝试在左侧显示
-    Offset targetPosition = Offset(
-      gesturePosition.dx - radius - offset,
-      adjustedY,
+    return MagnifierUtils.calculateMagnifierPosition(
+      gesturePosition,
+      sourcePosition,
+      widget.magnifierPositionMode,
+      widget.magnifierCornerPosition,
+      widget.magnifierEdgeOffset,
+      widget.magnifierRadius,
+      Size(widget.width, widget.height),
     );
-    
-    // 检查是否超出左边界，如果超出则显示在右侧
-    if (targetPosition.dx - radius < 0) {
-      targetPosition = Offset(
-        gesturePosition.dx + radius + offset,
-        adjustedY,
-      );
-    }
-    
-    // 检查是否超出右边界，如果超出则调整到右边界内
-    if (targetPosition.dx + radius > widgetSize.width) {
-      targetPosition = Offset(
-        widgetSize.width - radius,
-        targetPosition.dy,
-      );
-    }
-    
-    // 检查垂直方向边界
-    if (targetPosition.dy - radius < 0) {
-      targetPosition = Offset(
-        targetPosition.dx,
-        radius,
-      );
-    } else if (targetPosition.dy + radius > widgetSize.height) {
-      targetPosition = Offset(
-        targetPosition.dx,
-        widgetSize.height - radius,
-      );
-    }
-    
-    return targetPosition;
   }
 
   @override
@@ -482,23 +330,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox> with TickerProvider
   Future<void> _loadImageFromProvider() async {
     if (widget.imageProvider != null) {
       try {
-        final Completer<ui.Image> completer = Completer<ui.Image>();
-        final ImageStream stream = widget.imageProvider!.resolve(const ImageConfiguration());
-        
-        late ImageStreamListener listener;
-        listener = ImageStreamListener(
-          (flutter.ImageInfo info, bool synchronousCall) {
-            completer.complete(info.image);
-            stream.removeListener(listener);
-          },
-          onError: (dynamic exception, StackTrace? stackTrace) {
-            completer.completeError(exception, stackTrace);
-            stream.removeListener(listener);
-          },
-        );
-        
-        stream.addListener(listener);
-        final image = await completer.future;
+        final image = await ImageUtils.loadImageFromProvider(widget.imageProvider!);
         
         if (mounted) {
           setState(() {
@@ -508,7 +340,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox> with TickerProvider
         }
       } catch (e) {
         // 图片加载失败，保持_loadedImage为null
-        print('Failed to load image: $e');
+        // Failed to load image
       }
     }
   }
@@ -698,17 +530,17 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox> with TickerProvider
                 ),
                 size: Size(widget.width, widget.height),
                 child: RawGestureDetector(
-                  gestures: {
-                    _SingleTouchPanGestureRecognizer: GestureRecognizerFactoryWithHandlers<_SingleTouchPanGestureRecognizer>(
-                      () => _SingleTouchPanGestureRecognizer(),
-                      (_SingleTouchPanGestureRecognizer instance) {
-                        instance
-                          ..onStart = _onPanStart
-                          ..onUpdate = _onPanUpdate
-                          ..onEnd = _onPanEnd;
-                      },
-                    ),
-                  },
+                   gestures: {
+                     SingleTouchPanGestureRecognizer: GestureRecognizerFactoryWithHandlers<SingleTouchPanGestureRecognizer>(
+                       () => SingleTouchPanGestureRecognizer(),
+                       (SingleTouchPanGestureRecognizer instance) {
+                         instance
+                           ..onStart = _onPanStart
+                           ..onUpdate = _onPanUpdate
+                           ..onEnd = _onPanEnd;
+                       },
+                     ),
+                   },
                   behavior: HitTestBehavior.opaque,
                   child: Container(
                     width: double.infinity,
@@ -865,74 +697,22 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox> with TickerProvider
 
   /// 检查点是否靠近顶点
   bool _isPointNearVertex(Offset point, Offset vertex) {
-    const double threshold = 20.0;
-    return (point - vertex).distance < threshold;
+    return GeometryUtils.isPointNearVertex(point, vertex);
   }
 
   /// 检查点是否靠近边
   bool _isPointNearEdge(Offset point, Offset start, Offset end) {
-    const double threshold = 15.0;
-    
-    // 计算点到线段的距离
-    final double distance = _pointToLineDistance(point, start, end);
-    
-    // 检查点是否在线段范围内
-    final double segmentLength = (end - start).distance;
-    final double distanceToStart = (point - start).distance;
-    final double distanceToEnd = (point - end).distance;
-    
-    return distance < threshold && 
-           distanceToStart <= segmentLength + threshold && 
-           distanceToEnd <= segmentLength + threshold;
+    return GeometryUtils.isPointNearEdge(point, start, end);
   }
 
   /// 将坐标限制在图片显示区域边界内
   /// 这确保顶点只能在图片的实际显示范围内移动
   Offset _clampToImageBounds(Offset position) {
     final imageInfo = _getImageInfo();
-    
-    // 计算图片显示区域的边界
-    final left = imageInfo.offset.dx;
-    final top = imageInfo.offset.dy;
-    final right = left + imageInfo.displaySize.width;
-    final bottom = top + imageInfo.displaySize.height;
-    
-    return Offset(
-      position.dx.clamp(left, right),
-      position.dy.clamp(top, bottom),
-    );
+    return CoordinateUtils.clampToImageBounds(position, imageInfo);
   }
 
-  /// 计算点到线段的距离
-  double _pointToLineDistance(Offset point, Offset lineStart, Offset lineEnd) {
-    final double A = point.dx - lineStart.dx;
-    final double B = point.dy - lineStart.dy;
-    final double C = lineEnd.dx - lineStart.dx;
-    final double D = lineEnd.dy - lineStart.dy;
-    
-    final double dot = A * C + B * D;
-    final double lenSq = C * C + D * D;
-    
-    if (lenSq == 0) {
-      return (point - lineStart).distance;
-    }
-    
-    final double param = dot / lenSq;
-    
-    Offset projection;
-    if (param < 0) {
-      projection = lineStart;
-    } else if (param > 1) {
-      projection = lineEnd;
-    } else {
-      projection = Offset(
-        lineStart.dx + param * C,
-        lineStart.dy + param * D,
-      );
-    }
-    
-    return (point - projection).distance;
-  }
+
 
   /// 获取图片信息（包含真实尺寸和显示信息）
   /// 根据图片和容器的长宽比自动选择最佳适配方式
@@ -941,48 +721,10 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox> with TickerProvider
       return _imageInfo!;
     }
     
-    // 从Image对象获取真实尺寸
-    final realSize = Size(
-      _loadedImage!.width.toDouble(),
-      _loadedImage!.height.toDouble(),
-    );
-    
-    // 计算显示尺寸和偏移量（自适应缩放）
-    final containerSize = Size(widget.width, widget.height);
-    final imageAspectRatio = realSize.width / realSize.height;
-    final containerAspectRatio = containerSize.width / containerSize.height;
-    
-    double displayWidth, displayHeight, offsetX, offsetY;
-    
-    if (imageAspectRatio > containerAspectRatio) {
-      // 图片更宽，按宽度适配
-      displayWidth = containerSize.width;
-      displayHeight = displayWidth / imageAspectRatio;
-      offsetX = 0;
-      offsetY = (containerSize.height - displayHeight) / 2;
-    } else {
-      // 图片更高，按高度适配
-      displayHeight = containerSize.height;
-      displayWidth = displayHeight * imageAspectRatio;
-      offsetX = (containerSize.width - displayWidth) / 2;
-      offsetY = 0;
-    }
-    
-    // 确保偏移量不为负数
-    offsetX = offsetX.clamp(0, double.infinity);
-    offsetY = offsetY.clamp(0, double.infinity);
-    
-    // 确保显示尺寸不超出容器边界
-    displayWidth = displayWidth.clamp(0, containerSize.width);
-    displayHeight = displayHeight.clamp(0, containerSize.height);
-    
-    final displaySize = Size(displayWidth, displayHeight);
-    final offset = Offset(offsetX, offsetY);
-    
-    _imageInfo = QuadImageInfo(
-      realSize: realSize,
-      displaySize: displaySize,
-      offset: offset,
+    _imageInfo = ImageUtils.getImageInfo(
+      _loadedImage!,
+      widget.width,
+      widget.height,
     );
     
     return _imageInfo!;
@@ -991,57 +733,19 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox> with TickerProvider
   /// 将屏幕坐标转换为图片坐标系（用于放大镜）
   Offset _convertScreenToImageCoordinates(Offset screenPoint) {
     final imageInfo = _getImageInfo();
-    
-    // 减去图片在容器中的偏移量
-    final adjustedPoint = screenPoint - imageInfo.offset;
-    
-    // 计算在显示图片中的相对位置（0-1）
-    final relativeX = (adjustedPoint.dx / imageInfo.displaySize.width).clamp(0.0, 1.0);
-    final relativeY = (adjustedPoint.dy / imageInfo.displaySize.height).clamp(0.0, 1.0);
-    
-    // 转换为图片真实坐标
-    final realX = relativeX * imageInfo.realSize.width;
-    final realY = relativeY * imageInfo.realSize.height;
-    
-    return Offset(realX, realY);
+    return CoordinateUtils.convertScreenToImageCoordinates(screenPoint, imageInfo);
   }
 
   /// 将视图坐标转换为图片真实坐标
   List<Offset> convertToImageCoordinates(List<Offset> viewCoordinates) {
     final imageInfo = _getImageInfo();
-    
-    return viewCoordinates.map((viewPoint) {
-      // 减去图片在容器中的偏移量
-      final adjustedPoint = viewPoint - imageInfo.offset;
-      
-      // 计算在显示图片中的相对位置（0-1）
-      final relativeX = adjustedPoint.dx / imageInfo.displaySize.width;
-      final relativeY = adjustedPoint.dy / imageInfo.displaySize.height;
-      
-      // 转换为图片真实坐标
-      final realX = relativeX * imageInfo.realSize.width;
-      final realY = relativeY * imageInfo.realSize.height;
-      
-      return Offset(realX, realY);
-    }).toList();
+    return CoordinateUtils.convertToImageCoordinates(viewCoordinates, imageInfo);
   }
   
   /// 将图片真实坐标转换为视图坐标
   List<Offset> convertToViewCoordinates(List<Offset> imageCoordinates) {
     final imageInfo = _getImageInfo();
-    
-    return imageCoordinates.map((imagePoint) {
-      // 计算在图片中的相对位置（0-1）
-      final relativeX = imagePoint.dx / imageInfo.realSize.width;
-      final relativeY = imagePoint.dy / imageInfo.realSize.height;
-      
-      // 转换为显示坐标
-      final displayX = relativeX * imageInfo.displaySize.width;
-      final displayY = relativeY * imageInfo.displaySize.height;
-      
-      // 加上图片在容器中的偏移量
-      return Offset(displayX, displayY) + imageInfo.offset;
-    }).toList();
+    return CoordinateUtils.convertToViewCoordinates(imageCoordinates, imageInfo);
   }
   
   /// 获取当前矩形特征
@@ -1083,323 +787,5 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox> with TickerProvider
   /// 重置为默认顶点坐标（会自动应用边界限制）
   void resetVertices() {
     setRectangle(_getDefaultRectangle());
-  }
-}
-
-/// 自定义绘制器，用于绘制四边形和控制点
-class QuadrilateralPainter extends CustomPainter {
-  final List<Offset> vertices;
-  final RectangleFeature rectangle;
-  final int draggedVertexIndex;
-  final int draggedEdgeIndex;
-  final Color borderColor;
-  final Color errorColor;
-  final Color fillColor;
-  final Color vertexColor;
-  final Color highlightColor;
-  final double vertexRadius;
-  final double borderWidth;
-  final bool showVertexNumbers;
-  final Color maskColor;
-  final double breathingAnimation;
-  final Color breathingColor;
-  final double breathingGap;
-  final double breathingStrokeWidth;
-  final bool enableBreathing;
-  final bool enableMagnifier;
-  final bool showMagnifier;
-  final Offset magnifierPosition;
-  final Offset magnifierSourcePosition;
-  final double magnifierRadius;
-  final double magnification;
-  final Color magnifierBorderColor;
-  final double magnifierBorderWidth;
-  final Color magnifierCrosshairColor;
-  final double magnifierCrosshairRadius;
-  final MagnifierShape magnifierShape;
-  final ui.Image image;
-
-  QuadrilateralPainter({
-    required this.image,
-    required this.vertices,
-    required this.rectangle,
-    required this.draggedVertexIndex,
-    required this.draggedEdgeIndex,
-    required this.borderColor,
-    required this.errorColor,
-    required this.fillColor,
-    required this.vertexColor,
-    required this.highlightColor,
-    required this.vertexRadius,
-    required this.borderWidth,
-    required this.showVertexNumbers,
-    required this.maskColor,
-    required this.breathingAnimation,
-    required this.breathingColor,
-    required this.breathingGap,
-    required this.breathingStrokeWidth,
-    required this.enableBreathing,
-    required this.enableMagnifier,
-    required this.showMagnifier,
-    required this.magnifierPosition,
-    required this.magnifierSourcePosition,
-    required this.magnifierRadius,
-    required this.magnification,
-    required this.magnifierBorderColor,
-    required this.magnifierBorderWidth,
-    required this.magnifierCrosshairColor,
-    required this.magnifierCrosshairRadius,
-    required this.magnifierShape,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {    
-    // 如果遮罩颜色不透明，绘制外部遮罩
-    if (maskColor.alpha > 0) {
-      _drawOuterMask(canvas, size);
-    }
-    
-    // 绘制四边形填充
-    _drawQuadrilateral(canvas);
-    
-    // 绘制顶点
-    _drawVertices(canvas);
-    
-    // 绘制放大镜
-    if (enableMagnifier && showMagnifier) {
-      _drawMagnifier(canvas, size);
-    }
-  }
-
-  /// 绘制外部遮罩效果
-  void _drawOuterMask(Canvas canvas, Size size) {
-    if (vertices.isEmpty) return;
-    
-    // 创建整个画布的矩形路径
-    final Path outerPath = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
-    
-    // 创建四边形内部路径
-    final Path innerPath = Path();
-    innerPath.moveTo(vertices[0].dx, vertices[0].dy);
-    for (int i = 1; i < vertices.length; i++) {
-      innerPath.lineTo(vertices[i].dx, vertices[i].dy);
-    }
-    innerPath.close();
-    
-    // 使用差集操作创建镂空效果
-    final Path maskPath = Path.combine(PathOperation.difference, outerPath, innerPath);
-    
-    // 绘制遮罩
-    final Paint maskPaint = Paint()
-      ..color = maskColor
-      ..style = PaintingStyle.fill
-      ..isAntiAlias = true;  // 启用抗锯齿
-     
-    canvas.drawPath(maskPath, maskPaint);
-  }
- 
-    /// 绘制四边形（填充和边框）
-  void _drawQuadrilateral(Canvas canvas) {
-    if (vertices.isEmpty) return;
-    
-    final Path path = Path();
-    path.moveTo(vertices[0].dx, vertices[0].dy);
-    for (int i = 1; i < vertices.length; i++) {
-      path.lineTo(vertices[i].dx, vertices[i].dy);
-    }
-    path.close();
-    
-    // 绘制填充
-    final Paint fillPaint = Paint()
-      ..color = fillColor
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(path, fillPaint);
-    
-    // 绘制边框（根据四边形验证结果选择颜色）
-    final Paint linePaint = Paint()
-      ..color = rectangle.hasError ? errorColor : borderColor
-      ..strokeWidth = borderWidth
-      ..style = PaintingStyle.stroke
-      ..isAntiAlias = true;  // 启用抗锯齿以减少线条锯齿
-    canvas.drawPath(path, linePaint);
-    
-    // 高亮被拖动的边
-    if (draggedEdgeIndex != -1) {
-      final Paint highlightPaint = Paint()
-        ..color = highlightColor
-        ..strokeWidth = borderWidth + 2.0
-        ..style = PaintingStyle.stroke;
-      
-      final int nextIndex = (draggedEdgeIndex + 1) % vertices.length;
-      canvas.drawLine(
-        vertices[draggedEdgeIndex],
-        vertices[nextIndex],
-        highlightPaint,
-      );
-    }
-  }
-
-  /// 绘制顶点
-  void _drawVertices(Canvas canvas) {
-    for (int i = 0; i < vertices.length; i++) {
-      // 如果启用放大镜且当前顶点正在被拖动，则隐藏该顶点
-      if (enableMagnifier && showMagnifier && draggedVertexIndex == i) {
-        continue;
-      }
-      
-      final Paint vertexPaint = Paint()
-        ..color = draggedVertexIndex == i ? highlightColor : vertexColor
-        ..style = PaintingStyle.fill
-        ..isAntiAlias = true;  // 启用抗锯齿
-      
-      // 呼吸灯效果边框
-      final Paint breathingBorderPaint = Paint()
-        ..color = breathingColor.withOpacity(breathingAnimation)
-        ..strokeWidth = breathingStrokeWidth
-        ..style = PaintingStyle.stroke;
-      
-      final Paint borderPaint = Paint()
-        ..color = Colors.white.withOpacity(0.8)
-        ..strokeWidth = 1.0
-        ..style = PaintingStyle.stroke
-        ..isAntiAlias = true;  // 启用抗锯齿
-      
-      // 计算呼吸灯圆圈半径：顶点半径 + 间距 + 边框宽度的一半
-      final double breathingRadius = vertexRadius + breathingGap + breathingStrokeWidth / 2;
-      
-      // 绘制顶点圆圈
-      canvas.drawCircle(vertices[i], vertexRadius, vertexPaint);
-      // 绘制呼吸灯边框（外层）- 仅在启用呼吸灯动画时绘制
-      if (enableBreathing) {
-        canvas.drawCircle(vertices[i], breathingRadius, breathingBorderPaint);
-      }
-      // 绘制普通边框（内层）
-      canvas.drawCircle(vertices[i], vertexRadius, borderPaint);
-      
-      // 绘制顶点编号
-      if (showVertexNumbers) {
-        final TextPainter textPainter = TextPainter(
-          text: TextSpan(
-            text: '${i + 1}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          textDirection: TextDirection.ltr,
-        );
-        
-        textPainter.layout();
-        textPainter.paint(
-          canvas,
-          vertices[i] - Offset(textPainter.width / 2, textPainter.height / 2),
-        );
-      }
-    }
-  }
-
-  /// 绘制放大镜
-  void _drawMagnifier(Canvas canvas, Size size) {
-    // 保存画布状态
-    canvas.save();
-    
-    // 根据形状创建裁剪区域
-    final Path clipPath = Path();
-    if (magnifierShape == MagnifierShape.circle) {
-      clipPath.addOval(Rect.fromCircle(
-        center: magnifierPosition,
-        radius: magnifierRadius,
-      ));
-    } else {
-      // 方形放大镜
-      clipPath.addRect(Rect.fromCenter(
-        center: magnifierPosition,
-        width: magnifierRadius * 2,
-        height: magnifierRadius * 2,
-      ));
-    }
-    canvas.clipPath(clipPath);
-    
-    // 绘制放大的背景内容
-    // 计算源区域（要放大的区域）
-    final double sourceRadius = magnifierRadius / magnification;
-    final Rect sourceRect = Rect.fromCenter(
-      center: magnifierSourcePosition,
-      width: sourceRadius * 2,
-      height: sourceRadius * 2,
-    );
-    
-    // 目标区域（放大镜圆形区域）
-    final Rect destRect = Rect.fromCenter(
-      center: magnifierPosition,
-      width: magnifierRadius * 2,
-      height: magnifierRadius * 2,
-    );
-    
-    // 绘制放大的图片内容
-    canvas.drawImageRect(
-      image!,
-      sourceRect,
-      destRect,
-      Paint(),
-    );
-      
-    // 恢复画布状态
-    canvas.restore();
-    
-    // 绘制放大镜边框
-    final Paint borderPaint = Paint()
-      ..color = magnifierBorderColor
-      ..strokeWidth = magnifierBorderWidth
-      ..style = PaintingStyle.stroke
-      ..isAntiAlias = true;  // 启用抗锯齿
-    
-    if (magnifierShape == MagnifierShape.circle) {
-      canvas.drawCircle(magnifierPosition, magnifierRadius, borderPaint);
-    } else {
-      canvas.drawRect(
-        Rect.fromCenter(
-          center: magnifierPosition,
-          width: magnifierRadius * 2,
-          height: magnifierRadius * 2,
-        ),
-        borderPaint,
-      );
-    }
-    
-    // 绘制准心十字线
-    final Paint crosshairPaint = Paint()
-      ..color = magnifierCrosshairColor
-      ..strokeWidth = 1.5;
-    
-    final double crosshairLength = magnifierRadius * magnifierCrosshairRadius;
-    
-    // 水平线
-    canvas.drawLine(
-      Offset(magnifierPosition.dx - crosshairLength, magnifierPosition.dy),
-      Offset(magnifierPosition.dx + crosshairLength, magnifierPosition.dy),
-      crosshairPaint,
-    );
-    
-    // 垂直线
-    canvas.drawLine(
-      Offset(magnifierPosition.dx, magnifierPosition.dy - crosshairLength),
-      Offset(magnifierPosition.dx, magnifierPosition.dy + crosshairLength),
-      crosshairPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    if (oldDelegate is! QuadrilateralPainter) return true;
-    
-    return rectangle != oldDelegate.rectangle ||
-        draggedVertexIndex != oldDelegate.draggedVertexIndex ||
-        draggedEdgeIndex != oldDelegate.draggedEdgeIndex ||
-        showMagnifier != oldDelegate.showMagnifier ||
-        magnifierPosition != oldDelegate.magnifierPosition ||
-        magnifierSourcePosition != oldDelegate.magnifierSourcePosition;
   }
 }

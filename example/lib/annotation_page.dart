@@ -5,24 +5,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quad_annotator/flutter_quad_annotator.dart';
 import 'floating_control_panel.dart';
 
-/// 四边形裁剪页面
-class CropPage extends StatefulWidget {
+/// 四边形标注页面
+class AnnotationPage extends StatefulWidget {
   /// 图片数据源，可以是Asset路径或File对象
   final dynamic imageSource;
   /// 图片源类型：'asset', 'file', 'ui_image'
   final String sourceType;
   
-  const CropPage({
+  const AnnotationPage({
     super.key,
     required this.imageSource,
     required this.sourceType,
   });
 
   @override
-  State<CropPage> createState() => _CropPageState();
+  State<AnnotationPage> createState() => _AnnotationPageState();
 }
 
-class _CropPageState extends State<CropPage> {
+class _AnnotationPageState extends State<AnnotationPage> {
   /// 当前四个顶点的坐标（视图坐标）
   RectangleFeature currentRectangle = RectangleFeature(
     topLeft: const Offset(100, 100),
@@ -34,7 +34,7 @@ class _CropPageState extends State<CropPage> {
   /// 当前顶点的图片真实坐标
   List<Offset> currentImageVertices = [];
 
-  /// 裁剪组件的Key，用于获取和设置顶点坐标
+  /// 标注组件的Key，用于获取和设置顶点坐标
   final GlobalKey<QuadAnnotatorBoxState> _boxKey =
       GlobalKey<QuadAnnotatorBoxState>();
   
@@ -79,7 +79,7 @@ class _CropPageState extends State<CropPage> {
               Navigator.of(context).pop();
             },
           ),
-          title: const Text('图片四边形裁剪演示'),
+          title: const Text('图片四边形标注演示'),
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           actions: [
             // 重置按钮
@@ -90,9 +90,9 @@ class _CropPageState extends State<CropPage> {
             ),
             // 确认按钮
             IconButton(
-              onPressed: _confirmCrop,
+              onPressed: _confirmAnnotation,
               icon: const Icon(Icons.check),
-              tooltip: '确认裁剪',
+              tooltip: '确认标注',
             ),
           ],
         ),
@@ -403,8 +403,8 @@ class _CropPageState extends State<CropPage> {
     _boxKey.currentState?.setVertices(newVertices);
   }
 
-  /// 确认裁剪，返回图片和RectangleFeature数据
-  void _confirmCrop() {
+  /// 确认标注，返回图片和RectangleFeature数据
+  void _confirmAnnotation() {
     try {
       // 获取当前顶点的图片真实坐标（而不是UI坐标）
       final imageVertices = _boxKey.currentState?.getImageVertices();
@@ -427,7 +427,7 @@ class _CropPageState extends State<CropPage> {
       );
 
       // 创建返回数据
-      final cropResult = {
+      final annotationResult = {
         'imageSource': widget.imageSource,
         'sourceType': widget.sourceType,
         'rectangleFeature': rectangleFeature,
@@ -435,11 +435,11 @@ class _CropPageState extends State<CropPage> {
       };
 
       // 返回到首页并传递数据
-      Navigator.of(context).pop(cropResult);
+      Navigator.of(context).pop(annotationResult);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('确认裁剪失败: $e'),
+          content: Text('确认标注失败: $e'),
           backgroundColor: Colors.red,
         ),
       );

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_quad_annotator/flutter_quad_annotator.dart';
 import 'dart:io';
-import 'crop_page.dart';
+import 'annotation_page.dart';
 
 /// 应用主入口页面，提供图片选择功能
 class ExampleUsagePage extends StatefulWidget {
@@ -15,11 +15,11 @@ class ExampleUsagePage extends StatefulWidget {
 class _ExampleUsagePageState extends State<ExampleUsagePage> {
   final ImagePicker _picker = ImagePicker();
   
-  /// 裁剪结果数据
-  Map<String, dynamic>? _cropResult;
+  /// 标注结果数据
+  Map<String, dynamic>? _annotationResult;
   
   /// 是否显示结果
-  bool get _hasResult => _cropResult != null;
+  bool get _hasResult => _annotationResult != null;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
           padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
-              // 裁剪结果显示区域
+              // 标注结果显示区域
               if (_hasResult) ..._buildResultSection(),
               
               // 图片选择区域
@@ -206,7 +206,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CropPage(
+          builder: (context) => AnnotationPage(
             imageSource: imageSource,
             sourceType: sourceType,
           ),
@@ -215,19 +215,19 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
       
       if (result != null && mounted) {
         setState(() {
-          _cropResult = result;
+          _annotationResult = result;
         });
       }
     }
   }
 
-  /// 构建裁剪结果显示区域
+  /// 构建标注结果显示区域
   List<Widget> _buildResultSection() {
-    if (_cropResult == null) return [];
+    if (_annotationResult == null) return [];
     
-    final rectangleFeature = _cropResult!['rectangleFeature'] as RectangleFeature;
-    final imageSource = _cropResult!['imageSource'];
-    final sourceType = _cropResult!['sourceType'] as String;
+    final rectangleFeature = _annotationResult!['rectangleFeature'] as RectangleFeature;
+    final imageSource = _annotationResult!['imageSource'];
+    final sourceType = _annotationResult!['sourceType'] as String;
     
     return [
       // 标题和清除按钮
@@ -235,7 +235,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text(
-            '裁剪结果',
+            '标注结果',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -245,7 +245,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
           IconButton(
             onPressed: () {
               setState(() {
-                _cropResult = null;
+                _annotationResult = null;
               });
             },
             icon: const Icon(Icons.clear),

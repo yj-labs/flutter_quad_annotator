@@ -172,12 +172,12 @@ class RectangleFeature {
     
     if (oppositeSides1 && oppositeSides2) {
       // 正确的四边形，重新排序顶点以确保变量名与实际位置匹配
-      print('四边形正确，检查顶点位置关系');
+      // 四边形正确，检查顶点位置关系
       _reorderVertices();
       return true;
     } else {
       // 四边形交叉或其他错误情况，不进行自动重排序
-      print('四边形交叉或错误，保持当前状态');
+      // 四边形交叉或错误，保持当前状态
       _hasError = true;
       return false;
     }
@@ -212,7 +212,7 @@ class RectangleFeature {
     bottomLeft = newBottomLeft;
     bottomRight = newBottomRight;
     
-    print('顶点已重新排序: TL($topLeft), TR($topRight), BL($bottomLeft), BR($bottomRight)');
+    // 顶点已重新排序
   }
   
   /// 检查两个点是否在一条直线的两侧
