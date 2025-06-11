@@ -1193,7 +1193,8 @@ class QuadrilateralPainter extends CustomPainter {
     // 绘制遮罩
     final Paint maskPaint = Paint()
       ..color = maskColor
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;  // 启用抗锯齿
      
     canvas.drawPath(maskPath, maskPaint);
   }
@@ -1219,7 +1220,8 @@ class QuadrilateralPainter extends CustomPainter {
     final Paint linePaint = Paint()
       ..color = rectangle.hasError ? errorColor : borderColor
       ..strokeWidth = borderWidth
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;  // 启用抗锯齿以减少线条锯齿
     canvas.drawPath(path, linePaint);
     
     // 高亮被拖动的边
@@ -1248,7 +1250,8 @@ class QuadrilateralPainter extends CustomPainter {
       
       final Paint vertexPaint = Paint()
         ..color = draggedVertexIndex == i ? highlightColor : vertexColor
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;  // 启用抗锯齿
       
       // 呼吸灯效果边框
       final Paint breathingBorderPaint = Paint()
@@ -1259,7 +1262,8 @@ class QuadrilateralPainter extends CustomPainter {
       final Paint borderPaint = Paint()
         ..color = Colors.white.withOpacity(0.8)
         ..strokeWidth = 1.0
-        ..style = PaintingStyle.stroke;
+        ..style = PaintingStyle.stroke
+        ..isAntiAlias = true;  // 启用抗锯齿
       
       // 计算呼吸灯圆圈半径：顶点半径 + 间距 + 边框宽度的一半
       final double breathingRadius = vertexRadius + breathingGap + breathingStrokeWidth / 2;
@@ -1349,7 +1353,8 @@ class QuadrilateralPainter extends CustomPainter {
     final Paint borderPaint = Paint()
       ..color = magnifierBorderColor
       ..strokeWidth = magnifierBorderWidth
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;  // 启用抗锯齿
     
     if (magnifierShape == MagnifierShape.circle) {
       canvas.drawCircle(magnifierPosition, magnifierRadius, borderPaint);

@@ -82,18 +82,6 @@ class _CropPageState extends State<CropPage> {
           title: const Text('图片四边形裁剪演示'),
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           actions: [
-            // 遮罩效果开关
-            IconButton(
-              onPressed: () {
-                setState(() {
-                  _maskColor = _maskColor.alpha > 0 
-                      ? Colors.transparent 
-                      : const Color(0x80000000);
-                });
-              },
-              icon: Icon(_maskColor.alpha > 0 ? Icons.visibility_off : Icons.visibility),
-              tooltip: _maskColor.alpha > 0 ? '关闭遮罩效果' : '开启遮罩效果',
-            ),
             // 重置按钮
             IconButton(
               onPressed: _resetVertices,
