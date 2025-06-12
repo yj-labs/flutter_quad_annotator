@@ -58,9 +58,6 @@ class FloatingControlPanel extends StatefulWidget {
   /// 获取图片坐标回调
   final VoidCallback onGetImageVertices;
   
-  /// 设置随机位置回调
-  final VoidCallback onSetRandomVertices;
-  
   /// 重置顶点回调
   final VoidCallback onResetVertices;
   
@@ -87,7 +84,6 @@ class FloatingControlPanel extends StatefulWidget {
     this.currentRectangle,
     required this.onGetVertices,
     required this.onGetImageVertices,
-    required this.onSetRandomVertices,
     required this.onResetVertices,
     required this.maxHeight,
   });
@@ -420,19 +416,19 @@ class _FloatingControlPanelState extends State<FloatingControlPanel> {
               ),
               if (widget.currentRectangle != null) ...[
                 Text(
-                  '点1: (${widget.currentRectangle!.topLeft.dx.toStringAsFixed(1)}, ${widget.currentRectangle!.topLeft.dy.toStringAsFixed(1)})',
+                  '点1: (${widget.currentRectangle!.topLeft.x.toStringAsFixed(1)}, ${widget.currentRectangle!.topLeft.y.toStringAsFixed(1)})',
                   style: const TextStyle(fontSize: 11, color: Colors.green),
                 ),
                 Text(
-                  '点2: (${widget.currentRectangle!.topRight.dx.toStringAsFixed(1)}, ${widget.currentRectangle!.topRight.dy.toStringAsFixed(1)})',
+                  '点2: (${widget.currentRectangle!.topRight.x.toStringAsFixed(1)}, ${widget.currentRectangle!.topRight.y.toStringAsFixed(1)})',
                   style: const TextStyle(fontSize: 11, color: Colors.green),
                 ),
                 Text(
-                  '点3: (${widget.currentRectangle!.bottomRight.dx.toStringAsFixed(1)}, ${widget.currentRectangle!.bottomRight.dy.toStringAsFixed(1)})',
+                  '点3: (${widget.currentRectangle!.bottomRight.x.toStringAsFixed(1)}, ${widget.currentRectangle!.bottomRight.y.toStringAsFixed(1)})',
                   style: const TextStyle(fontSize: 11, color: Colors.green),
                 ),
                 Text(
-                  '点4: (${widget.currentRectangle!.bottomLeft.dx.toStringAsFixed(1)}, ${widget.currentRectangle!.bottomLeft.dy.toStringAsFixed(1)})',
+                  '点4: (${widget.currentRectangle!.bottomLeft.x.toStringAsFixed(1)}, ${widget.currentRectangle!.bottomLeft.y.toStringAsFixed(1)})',
                   style: const TextStyle(fontSize: 11, color: Colors.green),
                 ),
               ] else
@@ -455,7 +451,6 @@ class _FloatingControlPanelState extends State<FloatingControlPanel> {
       children: [
         _buildSmallButton('获取视图坐标', widget.onGetVertices, Colors.blue),
         _buildSmallButton('获取图片坐标', widget.onGetImageVertices, Colors.green),
-        _buildSmallButton('随机位置', widget.onSetRandomVertices, Colors.purple),
         _buildSmallButton('重置', widget.onResetVertices, Colors.grey),
       ],
     );

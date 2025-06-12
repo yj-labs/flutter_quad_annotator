@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import '../types.dart';
@@ -14,9 +15,9 @@ class MagnifierUtils {
   /// [magnifierRadius] 放大镜半径
   /// [containerSize] 容器尺寸
   /// 返回放大镜应该显示的位置
-  static Offset calculateMagnifierPosition(
-    Offset gesturePosition,
-    Offset sourcePosition,
+  static Point<double> calculateMagnifierPosition(
+    Point<double> gesturePosition,
+    Point<double> sourcePosition,
     MagnifierPositionMode positionMode,
     MagnifierCornerPosition cornerPosition,
     double edgeOffset,
@@ -27,7 +28,7 @@ class MagnifierUtils {
       case MagnifierPositionMode.center:
         // 模式1：放大镜圆心在手势位置（默认模式）
         return gesturePosition;
-        
+
       case MagnifierPositionMode.corner:
         // 模式2：放大镜固定在四个角之一
         return _getCornerPosition(
@@ -36,7 +37,7 @@ class MagnifierUtils {
           edgeOffset,
           containerSize,
         );
-        
+
       case MagnifierPositionMode.edge:
         // 模式3：放大镜边缘在手势位置，有偏移避免遮挡
         return _getEdgePosition(
@@ -54,7 +55,7 @@ class MagnifierUtils {
   /// [margin] 边缘间距
   /// [containerSize] 容器尺寸
   /// 返回角落位置坐标
-  static Offset _getCornerPosition(
+  static Point<double> _getCornerPosition(
     MagnifierCornerPosition cornerPosition,
     double radius,
     double margin,
@@ -62,13 +63,13 @@ class MagnifierUtils {
   ) {
     switch (cornerPosition) {
       case MagnifierCornerPosition.topLeft:
-        return Offset(radius + margin, radius + margin);
+        return Point(radius + margin, radius + margin);
       case MagnifierCornerPosition.topRight:
-        return Offset(containerSize.width - radius - margin, radius + margin);
+        return Point(containerSize.width - radius - margin, radius + margin);
       case MagnifierCornerPosition.bottomLeft:
-        return Offset(radius + margin, containerSize.height - radius - margin);
+        return Point(radius + margin, containerSize.height - radius - margin);
       case MagnifierCornerPosition.bottomRight:
-        return Offset(
+        return Point(
           containerSize.width - radius - margin,
           containerSize.height - radius - margin,
         );
@@ -81,50 +82,38 @@ class MagnifierUtils {
   /// [offset] 偏移距离
   /// [containerSize] 容器尺寸
   /// 返回边缘位置坐标
-  static Offset _getEdgePosition(
-    Offset gesturePosition,
+  static Point<double> _getEdgePosition(
+    Point<double> gesturePosition,
     double radius,
     double offset,
     Size containerSize,
   ) {
     // 计算Y坐标：让放大镜底部与手势位置齐平
-    double adjustedY = gesturePosition.dy - radius;
-    
+    double adjustedY = gesturePosition.y - radius;
+
     // 默认尝试在左侧显示
-    Offset targetPosition = Offset(
-      gesturePosition.dx - radius - offset,
+    Point<double> targetPosition = Point(
+      gesturePosition.x - radius - offset,
       adjustedY,
     );
-    
+
     // 检查是否超出左边界，如果超出则显示在右侧
-    if (targetPosition.dx - radius < 0) {
-      targetPosition = Offset(
-        gesturePosition.dx + radius + offset,
-        adjustedY,
-      );
+    if (targetPosition.x - radius < 0) {
+      targetPosition = Point(gesturePosition.x + radius + offset, adjustedY);
     }
-    
+
     // 检查是否超出右边界，如果超出则调整到右边界内
-    if (targetPosition.dx + radius > containerSize.width) {
-      targetPosition = Offset(
-        containerSize.width - radius,
-        targetPosition.dy,
-      );
+    if (targetPosition.x + radius > containerSize.width) {
+      targetPosition = Point(containerSize.width - radius, targetPosition.y);
     }
-    
+
     // 检查垂直方向边界
-    if (targetPosition.dy - radius < 0) {
-      targetPosition = Offset(
-        targetPosition.dx,
-        radius,
-      );
-    } else if (targetPosition.dy + radius > containerSize.height) {
-      targetPosition = Offset(
-        targetPosition.dx,
-        containerSize.height - radius,
-      );
+    if (targetPosition.y - radius < 0) {
+      targetPosition = Point(targetPosition.x, radius);
+    } else if (targetPosition.y + radius > containerSize.height) {
+      targetPosition = Point(targetPosition.x, containerSize.height - radius);
     }
-    
+
     return targetPosition;
   }
 
@@ -134,14 +123,14 @@ class MagnifierUtils {
   /// [containerSize] 容器尺寸
   /// 返回是否在边界内
   static bool isWithinBounds(
-    Offset position,
+    Point<double> position,
     double radius,
     Size containerSize,
   ) {
-    return position.dx - radius >= 0 &&
-           position.dy - radius >= 0 &&
-           position.dx + radius <= containerSize.width &&
-           position.dy + radius <= containerSize.height;
+    return position.x - radius >= 0 &&
+        position.y - radius >= 0 &&
+        position.x + radius <= containerSize.width &&
+        position.y + radius <= containerSize.height;
   }
 
   /// 调整放大镜位置使其保持在容器边界内
@@ -149,14 +138,14 @@ class MagnifierUtils {
   /// [radius] 放大镜半径
   /// [containerSize] 容器尺寸
   /// 返回调整后的位置
-  static Offset clampToBounds(
-    Offset position,
+  static Point<double> clampToBounds(
+    Point<double> position,
     double radius,
     Size containerSize,
   ) {
-    return Offset(
-      position.dx.clamp(radius, containerSize.width - radius),
-      position.dy.clamp(radius, containerSize.height - radius),
+    return Point(
+      position.x.clamp(radius, containerSize.width - radius),
+      position.y.clamp(radius, containerSize.height - radius),
     );
   }
 }

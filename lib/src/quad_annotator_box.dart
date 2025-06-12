@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -31,16 +32,16 @@ class QuadAnnotatorBox extends StatefulWidget {
   /// 顶点坐标变化时的回调函数
   final OnVerticesChanged? onVerticesChanged;
 
-  /// 顶点拖动开始时的回调函数
+  /// 顶点拖动开始时的回调函数（传递图片坐标系中的位置）
   final OnVertexDragStart? onVertexDragStart;
 
-  /// 顶点拖动结束时的回调函数
+  /// 顶点拖动结束时的回调函数（传递图片坐标系中的位置）
   final OnVertexDragEnd? onVertexDragEnd;
 
-  /// 边拖动开始时的回调函数
+  /// 边拖动开始时的回调函数（传递图片坐标系中的位置）
   final OnEdgeDragStart? onEdgeDragStart;
 
-  /// 边拖动结束时的回调函数
+  /// 边拖动结束时的回调函数（传递图片坐标系中的位置）
   final OnEdgeDragEnd? onEdgeDragEnd;
 
   /// 组件的宽度
@@ -155,7 +156,7 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.errorColor = Colors.red,
     this.fillColor = Colors.transparent,
     this.vertexColor = Colors.white,
-    this.highlightColor = Colors.orange,
+    this.highlightColor = Colors.green,
     this.vertexRadius = 8.0,
     this.borderWidth = 2.0,
     this.showVertexNumbers = true,
@@ -172,9 +173,9 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.magnification = 1.0,
     this.magnifierBorderColor = Colors.white,
     this.magnifierBorderWidth = 3.0,
-    this.magnifierCrosshairColor = Colors.red,
+    this.magnifierCrosshairColor = Colors.white,
     this.magnifierCrosshairRadius = 0.3,
-    this.magnifierPositionMode = MagnifierPositionMode.center,
+    this.magnifierPositionMode = MagnifierPositionMode.edge,
     this.magnifierCornerPosition = MagnifierCornerPosition.topLeft,
     this.magnifierEdgeOffset = 20.0,
     this.magnifierShape = MagnifierShape.circle,
@@ -198,7 +199,7 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.errorColor = Colors.red,
     this.fillColor = Colors.transparent,
     this.vertexColor = Colors.white,
-    this.highlightColor = Colors.orange,
+    this.highlightColor = Colors.green,
     this.vertexRadius = 8.0,
     this.borderWidth = 2.0,
     this.showVertexNumbers = true,
@@ -215,9 +216,9 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.magnification = 1.0,
     this.magnifierBorderColor = Colors.white,
     this.magnifierBorderWidth = 3.0,
-    this.magnifierCrosshairColor = Colors.red,
+    this.magnifierCrosshairColor = Colors.white,
     this.magnifierCrosshairRadius = 0.3,
-    this.magnifierPositionMode = MagnifierPositionMode.center,
+    this.magnifierPositionMode = MagnifierPositionMode.edge,
     this.magnifierCornerPosition = MagnifierCornerPosition.topLeft,
     this.magnifierEdgeOffset = 20.0,
     this.magnifierShape = MagnifierShape.circle,
@@ -237,7 +238,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   /// 返回转换为图片真实坐标的 QuadAnnotation 对象，如果当前没有矩形则返回 null
   QuadAnnotation? get imageQuad {
     if (rectangle == null) return null;
-    final imageVertices = convertToImageCoordinates(rectangle!.vertices);
+    final imageVertices = _convertToImageCoordinates(rectangle!.vertices);
     return QuadAnnotation.fromVertices(imageVertices);
   }
 
@@ -251,13 +252,29 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   bool isDragging = false;
 
   /// 拖动开始时的偏移量
-  Offset dragStartOffset = Offset.zero;
+  Point<double> dragStartPosition = Point(0, 0);
 
   /// 拖动开始时的矩形特征
   QuadAnnotation? dragStartRectangle;
 
   /// 图片信息缓存
-  QuadImageInfo? _imageInfo;
+  QuadImageInfo? _cachedImageInfo;
+  /// 获取图片信息（懒加载）
+  /// 根据图片和容器的长宽比自动选择最佳适配方式
+  /// 返回包含真实尺寸和显示信息的图片信息对象
+  QuadImageInfo get imageInfo {
+    return _cachedImageInfo ??= ImageUtils.getImageInfo(
+      _loadedImage!,
+      widget.width,
+      widget.height,
+    );
+  }
+
+  /// 清空图片信息缓存
+  /// 在图片或容器尺寸变化时调用，强制重新计算图片布局信息
+  void _clearImageInfoCache() {
+    _cachedImageInfo = null;
+  }
 
   /// 呼吸灯动画控制器
   late AnimationController _breathingController;
@@ -269,10 +286,10 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   bool _showMagnifier = false;
 
   /// 放大镜位置
-  Offset _magnifierPosition = Offset.zero;
+  Point<double> _magnifierPosition = Point(0, 0);
 
   /// 放大镜中心对应的原图位置
-  Offset _magnifierSourcePosition = Offset.zero;
+  Point<double> _magnifierSourcePosition = Point(0, 0);
 
   /// 异步加载的图片对象
   ui.Image? _loadedImage;
@@ -281,9 +298,9 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   /// [gesturePosition] 手势位置
   /// [sourcePosition] 源位置（图片坐标系）
   /// 返回放大镜应该显示的位置
-  Offset _calculateMagnifierPosition(
-    Offset gesturePosition,
-    Offset sourcePosition,
+  Point<double> _calculateMagnifierPosition(
+    Point<double>  gesturePosition,
+    Point<double>  sourcePosition,
   ) {
     return MagnifierUtils.calculateMagnifierPosition(
       gesturePosition,
@@ -336,21 +353,15 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   /// 如果没有提供 rectangle，则尝试使用 rectangle_detector 自动检测
   /// 如果检测失败，则使用默认矩形
   void _initializeRectangle() async {
-    print('🔥🔥🔥 _initializeRectangle 方法被调用了！🔥🔥🔥');
-    print('🔍 [DEBUG] _loadedImage 是否为空: ${_loadedImage == null}');
     if (_loadedImage != null) {
-      print('🔍 [DEBUG] 图片尺寸: ${_loadedImage!.width}x${_loadedImage!.height}');
-      print('🔍 [DEBUG] widget.rectangle 是否为空: ${widget.rectangle == null}');
       QuadAnnotation? detectedRectangle;
 
       // 如果没有提供初始矩形且启用了自动检测，尝试自动检测
       if (widget.rectangle == null && widget.autoDetect) {
         try {
           detectedRectangle = await _detectRectangleFromImage();
-          print("检测矩形成功：$detectedRectangle");
         } catch (e) {
           // 检测失败，使用默认矩形
-          print('矩形检测失败: $e');
         }
       }
 
@@ -359,7 +370,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       if (widget.rectangle != null) {
         // 将图片真实坐标转换为视图坐标
         final imageVertices = widget.rectangle!.vertices;
-        final viewVertices = convertToViewCoordinates(imageVertices);
+        final viewVertices = _convertToViewCoordinates(imageVertices);
         initialQuad = QuadAnnotation.fromVertices(viewVertices);
       }
 
@@ -414,51 +425,51 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     // 如果组件尺寸发生变化，保持四边形的相对位置
     if (oldWidget.width != widget.width || oldWidget.height != widget.height) {
       // 保存当前四边形在图片中的真实坐标
-      List<Offset>? savedImageCoordinates;
+      List<Point<double>>? savedImageCoordinates;
       QuadImageInfo? oldImageInfo;
 
-      if (rectangle != null && !rectangle!.isFixedCoordinates) {
+      if (rectangle != null) {
         // 先获取旧的图片信息
-        oldImageInfo = _imageInfo;
+        oldImageInfo = _cachedImageInfo;
         if (oldImageInfo != null) {
           // 使用旧的图片信息将当前视图坐标转换为图片坐标
           savedImageCoordinates = rectangle!.vertices.map((viewPoint) {
             // 减去图片在容器中的偏移量
-            final adjustedPoint = viewPoint - oldImageInfo!.offset;
+            final adjustedPoint = viewPoint.subtractOffset(oldImageInfo!.offset);
 
             // 计算在显示图片中的相对位置（0-1）
-            final relativeX = adjustedPoint.dx / oldImageInfo.displaySize.width;
+            final relativeX = adjustedPoint.x / oldImageInfo.displaySize.width;
             final relativeY =
-                adjustedPoint.dy / oldImageInfo.displaySize.height;
+                adjustedPoint.y / oldImageInfo.displaySize.height;
 
             // 转换为图片真实坐标
             final realX = relativeX * oldImageInfo.realSize.width;
             final realY = relativeY * oldImageInfo.realSize.height;
 
-            return Offset(realX, realY);
+            return Point(realX, realY);
           }).toList();
         }
       }
 
       // 清除图片信息缓存以重新计算布局
-      _imageInfo = null;
+      _clearImageInfoCache();
 
       if (savedImageCoordinates != null) {
         // 获取新的图片信息
-        final newImageInfo = _getImageInfo();
+        final newImageInfo = imageInfo;
 
         // 将保存的图片坐标转换为新布局下的视图坐标
         final newViewCoordinates = savedImageCoordinates.map((imagePoint) {
           // 计算在图片中的相对位置（0-1）
-          final relativeX = imagePoint.dx / newImageInfo.realSize.width;
-          final relativeY = imagePoint.dy / newImageInfo.realSize.height;
+          final relativeX = imagePoint.x / newImageInfo.realSize.width;
+          final relativeY = imagePoint.y / newImageInfo.realSize.height;
 
           // 转换为显示坐标
           final displayX = relativeX * newImageInfo.displaySize.width;
           final displayY = relativeY * newImageInfo.displaySize.height;
 
           // 加上图片在容器中的偏移量
-          return Offset(displayX, displayY) + newImageInfo.offset;
+          return Point(displayX, displayY).addOffset(newImageInfo.offset);
         }).toList();
 
         // 更新四边形顶点位置
@@ -475,31 +486,23 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     }
   }
 
-  /// 检查并更新矩形坐标（确保在图片加载后初始化）
-  void _ensureRectangleInitialized() {
-    if (rectangle?.isFixedCoordinates == true) {
-      // 如果当前是固定坐标，重新计算基于图片的坐标
-      rectangle = _getDefaultRectangle();
-    }
-  }
-
   /// 获取默认的矩形特征（基于图片显示区域）
   QuadAnnotation _getDefaultRectangle() {
-    final imageInfo = _getImageInfo();
+    final imageInfoData = imageInfo;
     // 根据顶点半径计算内边距，确保顶点完全显示且有适当间距
     final padding = widget.vertexRadius;
 
     // 计算图片显示区域的边界
-    final left = imageInfo.offset.dx;
-    final top = imageInfo.offset.dy;
-    final right = left + imageInfo.displaySize.width;
-    final bottom = top + imageInfo.displaySize.height;
+    final left = imageInfoData.offset.dx;
+    final top = imageInfoData.offset.dy;
+    final right = left + imageInfoData.displaySize.width;
+    final bottom = top + imageInfoData.displaySize.height;
 
     return QuadAnnotation(
-      topLeft: Offset(left + padding, top + padding),
-      topRight: Offset(right - padding, top + padding),
-      bottomRight: Offset(right - padding, bottom - padding),
-      bottomLeft: Offset(left + padding, bottom - padding),
+      topLeft: Point(left + padding, top + padding),
+      topRight: Point(right - padding, top + padding),
+      bottomRight: Point(right - padding, bottom - padding),
+      bottomLeft: Point(left + padding, bottom - padding),
     );
   }
 
@@ -515,9 +518,6 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
         child: const Center(child: CircularProgressIndicator()),
       );
     }
-
-    // 确保矩形在图片加载后正确初始化
-    _ensureRectangleInitialized();
 
     // 如果矩形还未初始化，显示加载占位符
     if (rectangle == null) {
@@ -606,8 +606,6 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     );
   }
 
-
-
   /// 更新组件状态的统一方法
   /// [callback] 状态更新回调函数
   void updateState(VoidCallback callback) {
@@ -615,79 +613,58 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   }
 
   /// 检查点是否靠近顶点
-  bool _isPointNearVertex(Offset point, Offset vertex) {
+  bool _isPointNearVertex(Point<double> point, Point<double> vertex) {
     return GeometryUtils.isPointNearVertex(point, vertex);
   }
 
   /// 检查点是否靠近边
-  bool _isPointNearEdge(Offset point, Offset start, Offset end) {
+  bool _isPointNearEdge(Point<double> point, Point<double> start, Point<double> end) {
     return GeometryUtils.isPointNearEdge(point, start, end);
   }
 
   /// 将坐标限制在图片显示区域边界内
   /// 这确保顶点只能在图片的实际显示范围内移动
-  Offset _clampToImageBounds(Offset position) {
-    final imageInfo = _getImageInfo();
-    return CoordinateUtils.clampToImageBounds(position, imageInfo);
-  }
-
-  /// 获取图片信息（包含真实尺寸和显示信息）
-  /// 根据图片和容器的长宽比自动选择最佳适配方式
-  QuadImageInfo _getImageInfo() {
-    if (_imageInfo != null) {
-      return _imageInfo!;
-    }
-
-    _imageInfo = ImageUtils.getImageInfo(
-      _loadedImage!,
-      widget.width,
-      widget.height,
-    );
-
-    return _imageInfo!;
+  Point<double> _clampToImageBounds(Point<double> position) {
+    final imageInfoData = imageInfo;
+    return CoordinateUtils.clampToImageBounds(position, imageInfoData);
   }
 
   /// 将屏幕坐标转换为图片坐标系（用于放大镜）
-  Offset _convertScreenToImageCoordinates(Offset screenPoint) {
-    final imageInfo = _getImageInfo();
+  Point<double> _convertScreenToImageCoordinates(Point<double> screenPoint) {
+    final imageInfoData = imageInfo;
     return CoordinateUtils.convertScreenToImageCoordinates(
-      screenPoint,
-      imageInfo,
-    );
+        screenPoint,
+        imageInfoData,
+      );
   }
 
   /// 将视图坐标转换为图片真实坐标
-  List<Offset> convertToImageCoordinates(List<Offset> viewCoordinates) {
-    final imageInfo = _getImageInfo();
+  List<Point<double>> _convertToImageCoordinates(List<Point<double>> viewCoordinates) {
+    final imageInfoData = imageInfo;
     return CoordinateUtils.convertToImageCoordinates(
-      viewCoordinates,
-      imageInfo,
-    );
+        viewCoordinates,
+        imageInfoData,
+      );
   }
 
   /// 将图片真实坐标转换为视图坐标
-  List<Offset> convertToViewCoordinates(List<Offset> imageCoordinates) {
-    final imageInfo = _getImageInfo();
+  List<Point<double>> _convertToViewCoordinates(List<Point<double>> imageCoordinates) {
+    final imageInfoData = imageInfo;
     return CoordinateUtils.convertToViewCoordinates(
-      imageCoordinates,
-      imageInfo,
-    );
-  }
-
-  /// 获取当前矩形特征
-  QuadAnnotation getRectangle() {
-    return rectangle?.copy() ?? QuadAnnotation.fromVertices([]);
+        imageCoordinates,
+        imageInfoData,
+      );
   }
 
   /// 获取当前顶点坐标（视图坐标）
-  List<Offset> getVertices() {
+  List<Point<double>> getVertices() {
     return rectangle?.vertices ?? [];
   }
 
   /// 获取当前顶点的图片真实坐标
-  List<Offset> getImageVertices() {
+  List<Point<double>> getImageVertices() {
     return rectangle != null
-        ? convertToImageCoordinates(rectangle!.vertices)
+        ? _convertToImageCoordinates(rectangle!.vertices)
         : [];
   }
 
@@ -705,13 +682,6 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     _onVerticesChanged();
   }
 
-  /// 设置顶点坐标（会自动应用边界限制）
-  void setVertices(List<Offset> newVertices) {
-    if (newVertices.length == 4) {
-      setRectangle(QuadAnnotation.fromVertices(newVertices));
-    }
-  }
-
   /// 重置为默认顶点坐标（会自动应用边界限制）
   void resetVertices() {
     setRectangle(_getDefaultRectangle());
@@ -721,59 +691,32 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   /// 返回检测到的矩形，如果检测失败则返回 null
   Future<QuadAnnotation?> _detectRectangleFromImage() async {
     if (_loadedImage == null) {
-      print('🔍 [DEBUG] _loadedImage is null');
       return null;
     }
 
     try {
-      print(
-        '🔍 [DEBUG] 开始检测矩形，图片尺寸: ${_loadedImage!.width}x${_loadedImage!.height}',
-      );
-
       // 将图片转换为字节数据
       // 使用 rawRgba 格式确保跨平台兼容性，避免 iOS 平台的 INVALID_IMAGE 错误
       final byteData = await _loadedImage!.toByteData(
         format: ui.ImageByteFormat.png,
       );
       if (byteData == null) {
-        print('🔍 [DEBUG] byteData is null');
         return null;
       }
 
       final imageBytes = byteData.buffer.asUint8List();
-      print('🔍 [DEBUG] 图片字节数据长度: ${imageBytes.length}');
 
       // 使用 rectangle_detector 检测矩形
       final result = await RectangleDetector.detectRectangle(imageBytes);
 
       if (result != null) {
-        print('🔍 [DEBUG] 检测成功！原始坐标:');
-        print('  - topLeft: (${result.topLeft.x}, ${result.topLeft.y})');
-        print('  - topRight: (${result.topRight.x}, ${result.topRight.y})');
-        print(
-          '  - bottomRight: (${result.bottomRight.x}, ${result.bottomRight.y})',
-        );
-        print(
-          '  - bottomLeft: (${result.bottomLeft.x}, ${result.bottomLeft.y})',
-        );
         final annotation = QuadAnnotation.fromRectangleFeature(result);
-        final viewVertices = convertToViewCoordinates(annotation.vertices);
-
-        print('🔍 [DEBUG] 转换后的视图坐标:');
-        for (int i = 0; i < viewVertices.length; i++) {
-          print(
-            '  - 点${i + 1}: (${viewVertices[i].dx.toStringAsFixed(2)}, ${viewVertices[i].dy.toStringAsFixed(2)})',
-          );
-        }
-
+        final viewVertices = _convertToViewCoordinates(annotation.vertices);
         return QuadAnnotation.fromVertices(viewVertices);
       } else {
-        print('🔍 [DEBUG] 检测失败，未找到矩形');
         return null;
       }
-    } catch (e, stackTrace) {
-      print('🔍 [DEBUG] 检测过程中发生错误: $e');
-      print('🔍 [DEBUG] 堆栈跟踪: $stackTrace');
+    } catch (e) {
       return null;
     }
   }
@@ -785,8 +728,8 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
   /// 处理拖动开始手势
   /// [details] 拖动开始的详细信息
   void _onPanStart(DragStartDetails details) {
-    final localPosition = details.localPosition;
-    dragStartOffset = localPosition;
+    final localPosition = details.localPosition.toPoint();
+    dragStartPosition = localPosition;
     dragStartRectangle = rectangle?.copy();
 
     final vertices = rectangle?.vertices ?? [];
@@ -812,8 +755,9 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
             );
           }
         });
-        // 触发顶点拖动开始回调
-        widget.onVertexDragStart?.call(i, vertices[i]);
+        // 触发顶点拖动开始回调（传递图片坐标）
+        final imageCoordinates = _convertToImageCoordinates([vertices[i]]);
+        widget.onVertexDragStart?.call(i, imageCoordinates.first);
         return;
       }
     }
@@ -827,8 +771,9 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
           draggedVertexIndex = -1;
           isDragging = true;
         });
-        // 触发边拖动开始回调
-        widget.onEdgeDragStart?.call(i, localPosition);
+        // 触发边拖动开始回调（传递图片坐标）
+        final imageCoordinates = _convertToImageCoordinates([localPosition]);
+        widget.onEdgeDragStart?.call(i, imageCoordinates.first);
         return;
       }
     }
@@ -846,8 +791,8 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
   /// 处理拖动更新手势
   /// [details] 拖动更新的详细信息
   void _onPanUpdate(DragUpdateDetails details) {
-    final localPosition = details.localPosition;
-    final delta = localPosition - dragStartOffset;
+    final localPosition = details.localPosition.toPoint();
+    final delta = localPosition - dragStartPosition;
 
     if (draggedVertexIndex != -1) {
       // 拖动顶点
@@ -870,7 +815,7 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
     if (draggedVertexIndex != -1) {
       _handleVertexDragEnd();
     } else if (draggedEdgeIndex != -1) {
-      _handleEdgeDragEnd(details.localPosition);
+      _handleEdgeDragEnd(details.localPosition.toPoint());
     }
 
     // 重置拖动状态
@@ -880,7 +825,7 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
   /// 处理顶点拖动
   /// [localPosition] 当前手势位置
   /// [delta] 位置变化量
-  void _handleVertexDrag(Offset localPosition, Offset delta) {
+  void _handleVertexDrag(Point<double> localPosition, Point<double> delta) {
     updateState(() {
       final startVertex = dragStartRectangle!.getVertex(draggedVertexIndex);
       final newPosition = startVertex + delta;
@@ -907,10 +852,10 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
 
   /// 处理边拖动（移动整个四边形）
   /// [delta] 位置变化量
-  void _handleEdgeDrag(Offset delta) {
+  void _handleEdgeDrag(Point<double> delta) {
     updateState(() {
       final startVertices = dragStartRectangle!.vertices;
-      final newVertices = <Offset>[];
+      final newVertices = <Point<double>>[];
       bool canMove = true;
 
       // 先检查所有顶点移动后是否都在边界内
@@ -920,7 +865,7 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
         newVertices.add(clampedPosition);
 
         // 如果任何顶点被限制，则不允许整体移动
-        if ((newPosition - clampedPosition).distance > 0.1) {
+        if (newPosition.distanceTo(clampedPosition) > 0.1) {
           canMove = false;
           break;
         }
@@ -939,17 +884,22 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
   /// 处理顶点拖动结束
   void _handleVertexDragEnd() {
     if (rectangle != null) {
+      // 将视图坐标转换为图片坐标
+      final viewVertex = rectangle!.getVertex(draggedVertexIndex);
+      final imageCoordinates = _convertToImageCoordinates([viewVertex]);
       widget.onVertexDragEnd?.call(
         draggedVertexIndex,
-        rectangle!.getVertex(draggedVertexIndex),
+        imageCoordinates.first,
       );
     }
   }
 
   /// 处理边拖动结束
-  /// [localPosition] 结束位置
-  void _handleEdgeDragEnd(Offset localPosition) {
-    widget.onEdgeDragEnd?.call(draggedEdgeIndex, localPosition);
+  /// [localPosition] 结束位置（视图坐标）
+  void _handleEdgeDragEnd(Point<double> localPosition) {
+    // 将视图坐标转换为图片坐标
+    final imageCoordinates = _convertToImageCoordinates([localPosition]);
+    widget.onEdgeDragEnd?.call(draggedEdgeIndex, imageCoordinates.first);
   }
 
   /// 触发顶点变化回调

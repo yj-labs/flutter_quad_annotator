@@ -325,10 +325,10 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
               ),
             ),
             const SizedBox(height: 8),
-            Text('左上角: (${rectangleFeature.topLeft.dx.toStringAsFixed(1)}, ${rectangleFeature.topLeft.dy.toStringAsFixed(1)})', style: const TextStyle(color: Colors.green)),
-            Text('右上角: (${rectangleFeature.topRight.dx.toStringAsFixed(1)}, ${rectangleFeature.topRight.dy.toStringAsFixed(1)})', style: const TextStyle(color: Colors.green)),
-            Text('右下角: (${rectangleFeature.bottomRight.dx.toStringAsFixed(1)}, ${rectangleFeature.bottomRight.dy.toStringAsFixed(1)})', style: const TextStyle(color: Colors.green)),
-            Text('左下角: (${rectangleFeature.bottomLeft.dx.toStringAsFixed(1)}, ${rectangleFeature.bottomLeft.dy.toStringAsFixed(1)})', style: const TextStyle(color: Colors.green))
+            Text('左上角: (${rectangleFeature.topLeft.x.toStringAsFixed(1)}, ${rectangleFeature.topLeft.y.toStringAsFixed(1)})', style: const TextStyle(color: Colors.green)),
+            Text('右上角: (${rectangleFeature.topRight.x.toStringAsFixed(1)}, ${rectangleFeature.topRight.y.toStringAsFixed(1)})', style: const TextStyle(color: Colors.green)),
+            Text('右下角: (${rectangleFeature.bottomRight.x.toStringAsFixed(1)}, ${rectangleFeature.bottomRight.y.toStringAsFixed(1)})', style: const TextStyle(color: Colors.green)),
+            Text('左下角: (${rectangleFeature.bottomLeft.x.toStringAsFixed(1)}, ${rectangleFeature.bottomLeft.y.toStringAsFixed(1)})', style: const TextStyle(color: Colors.green))
           ],
         ),
       ),

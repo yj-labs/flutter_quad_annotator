@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -149,7 +150,6 @@ class _AnnotationPageState extends State<AnnotationPage> {
                   currentRectangle: currentRectangle,
                   onGetVertices: _getVertices,
                   onGetImageVertices: _getImageVertices,
-                  onSetRandomVertices: _setRandomVertices,
                   onResetVertices: _resetVertices,
                   maxHeight: constraints.maxHeight,
                 ),
@@ -266,35 +266,35 @@ class _AnnotationPageState extends State<AnnotationPage> {
   }
   
   /// 顶点拖动开始时的回调函数
-  void _onVertexDragStart(int vertexIndex, Offset position) {
+  void _onVertexDragStart(int vertexIndex, Point<double> position) {
     setState(() {
       _dragStatus = '正在拖动顶点 ${vertexIndex + 1}';
     });
-    _addDragHistory('开始拖动顶点 ${vertexIndex + 1} 从位置 (${position.dx.toStringAsFixed(1)}, ${position.dy.toStringAsFixed(1)})');
+    _addDragHistory('开始拖动顶点 ${vertexIndex + 1} 从位置 (${position.x.toStringAsFixed(1)}, ${position.y.toStringAsFixed(1)})');
   }
   
   /// 顶点拖动结束时的回调函数
-  void _onVertexDragEnd(int vertexIndex, Offset position) {
+  void _onVertexDragEnd(int vertexIndex, Point<double> position) {
     setState(() {
       _dragStatus = '未拖动';
     });
-    _addDragHistory('结束拖动顶点 ${vertexIndex + 1} 到位置 (${position.dx.toStringAsFixed(1)}, ${position.dy.toStringAsFixed(1)})');
+    _addDragHistory('结束拖动顶点 ${vertexIndex + 1} 到位置 (${position.x.toStringAsFixed(1)}, ${position.y.toStringAsFixed(1)})');
   }
   
   /// 边拖动开始时的回调函数
-  void _onEdgeDragStart(int edgeIndex, Offset position) {
+  void _onEdgeDragStart(int edgeIndex, Point<double> position) {
     setState(() {
       _dragStatus = '正在拖动边 ${edgeIndex + 1}';
     });
-    _addDragHistory('开始拖动边 ${edgeIndex + 1} 从位置 (${position.dx.toStringAsFixed(1)}, ${position.dy.toStringAsFixed(1)})');
+    _addDragHistory('开始拖动边 ${edgeIndex + 1} 从位置 (${position.x.toStringAsFixed(1)}, ${position.y.toStringAsFixed(1)})');
   }
   
   /// 边拖动结束时的回调函数
-  void _onEdgeDragEnd(int edgeIndex, Offset position) {
+  void _onEdgeDragEnd(int edgeIndex, Point<double> position) {
     setState(() {
       _dragStatus = '未拖动';
     });
-    _addDragHistory('结束拖动边 ${edgeIndex + 1} 到位置 (${position.dx.toStringAsFixed(1)}, ${position.dy.toStringAsFixed(1)})');
+    _addDragHistory('结束拖动边 ${edgeIndex + 1} 到位置 (${position.x.toStringAsFixed(1)}, ${position.y.toStringAsFixed(1)})');
   }
   
   /// 添加拖动历史记录
@@ -323,7 +323,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
               final index = entry.key;
               final vertex = entry.value;
               return Text(
-                '顶点${index + 1}: (${vertex.dx.toStringAsFixed(2)}, ${vertex.dy.toStringAsFixed(2)})',
+                '顶点${index + 1}: (${vertex.x.toStringAsFixed(2)}, ${vertex.y.toStringAsFixed(2)})',
               );
             }).toList(),
           ),
@@ -377,7 +377,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 2),
               child: Text(
-                '顶点${index + 1}: (${vertex.dx.toStringAsFixed(2)}, ${vertex.dy.toStringAsFixed(2)})',
+                '顶点${index + 1}: (${vertex.x.toStringAsFixed(2)}, ${vertex.y.toStringAsFixed(2)})',
                 style: const TextStyle(fontFamily: 'monospace'),
               ),
             );
@@ -391,19 +391,6 @@ class _AnnotationPageState extends State<AnnotationPage> {
         ],
       ),
     );
-  }
-
-  /// 设置随机顶点位置
-  void _setRandomVertices() {
-    final random = DateTime.now().millisecondsSinceEpoch;
-    final newVertices = [
-      Offset(50 + (random % 100).toDouble(), 50 + ((random ~/ 100) % 100).toDouble()),
-      Offset(250 + (random % 150).toDouble(), 50 + ((random ~/ 150) % 100).toDouble()),
-      Offset(200 + (random % 180).toDouble(), 250 + ((random ~/ 180) % 150).toDouble()),
-      Offset(50 + (random % 120).toDouble(), 200 + ((random ~/ 120) % 180).toDouble()),
-    ];
-    
-    _boxKey.currentState?.setVertices(newVertices);
   }
 
   /// 确认标注，返回图片和QuadAnnotation数据

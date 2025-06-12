@@ -1,5 +1,5 @@
-import 'dart:math';
-import 'dart:ui';
+import 'dart:math' show Point;
+import 'package:flutter/material.dart';
 import 'package:rectangle_detector/rectangle_detector.dart';
 
 /// 四边形注释类，用于存储和操作四个顶点坐标
@@ -11,28 +11,28 @@ class QuadAnnotation {
   /// 获取当前错误状态
   bool get hasError => _hasError;
   /// 左上角顶点
-  Offset topLeft;
+  Point<double> topLeft;
   
   /// 右上角顶点
-  Offset topRight;
+  Point<double> topRight;
   
   /// 左下角顶点
-  Offset bottomLeft;
+  Point<double> bottomLeft;
   
   /// 右下角顶点
-  Offset bottomRight;
+  Point<double> bottomRight;
   
   /// 构造函数
   QuadAnnotation({
-    this.topLeft = Offset.zero,
-    this.topRight = Offset.zero,
-    this.bottomLeft = Offset.zero,
-    this.bottomRight = Offset.zero,
+    required this.topLeft,
+    required this.topRight,
+    required this.bottomLeft,
+    required this.bottomRight,
   });
   
   /// 从顶点列表创建四边形注释
   /// 顶点顺序：[左上, 右上, 右下, 左下]
-  factory QuadAnnotation.fromVertices(List<Offset> vertices) {
+  factory QuadAnnotation.fromVertices(List<Point<double>> vertices) {
     if (vertices.length != 4) {
       throw ArgumentError('顶点列表必须包含4个点');
     }
@@ -50,58 +50,58 @@ class QuadAnnotation {
     double padding = 10.0,
   }) {
     return QuadAnnotation(
-      topLeft: Offset(padding, padding),
-      topRight: Offset(containerSize.width - padding, padding),
-      bottomRight: Offset(containerSize.width - padding, containerSize.height - padding),
-      bottomLeft: Offset(padding, containerSize.height - padding),
+      topLeft: Point<double>(padding, padding),
+      topRight: Point<double>(containerSize.width - padding, padding),
+      bottomRight: Point<double>(containerSize.width - padding, containerSize.height - padding),
+      bottomLeft: Point<double>(padding, containerSize.height - padding),
     );
   }
   
   /// 从RectangleFeature创建QuadAnnotation
   factory QuadAnnotation.fromRectangleFeature(RectangleFeature rect) {
     return QuadAnnotation(
-      topLeft: Offset(rect.topLeft.x, rect.topLeft.y),
-      topRight: Offset(rect.topRight.x, rect.topRight.y),
-      bottomLeft: Offset(rect.bottomLeft.x, rect.bottomLeft.y),
-      bottomRight: Offset(rect.bottomRight.x, rect.bottomRight.y),
+      topLeft: Point<double>(rect.topLeft.x, rect.topLeft.y),
+      topRight: Point<double>(rect.topRight.x, rect.topRight.y),
+      bottomLeft: Point<double>(rect.bottomLeft.x, rect.bottomLeft.y),
+      bottomRight: Point<double>(rect.bottomRight.x, rect.bottomRight.y),
     );
   }
   
   /// 转换为顶点列表
   /// 返回顺序：[左上, 右上, 右下, 左下]
-  List<Offset> get vertices => [topLeft, topRight, bottomRight, bottomLeft];
+  List<Point<double>> get vertices => [topLeft, topRight, bottomRight, bottomLeft];
   
   /// 转换为RectangleFeature
   RectangleFeature toRectangleFeature() {
     return RectangleFeature(
-      topLeft: Point(topLeft.dx, topLeft.dy),
-      topRight: Point(topRight.dx, topRight.dy),
-      bottomLeft: Point(bottomLeft.dx, bottomLeft.dy),
-      bottomRight: Point(bottomRight.dx, bottomRight.dy),
+      topLeft: topLeft,
+      topRight: topRight,
+      bottomLeft: bottomLeft,
+      bottomRight: bottomRight,
     );
   }
   
   /// 获取边界矩形
   Rect get bounds {
     final points = vertices;
-    double xMin = points[0].dx;
-    double xMax = points[0].dx;
-    double yMin = points[0].dy;
-    double yMax = points[0].dy;
+    double xMin = points[0].x;
+    double xMax = points[0].x;
+    double yMin = points[0].y;
+    double yMax = points[0].y;
     
     for (int i = 1; i < points.length; i++) {
       final point = points[i];
-      if (point.dx > xMax) xMax = point.dx;
-      if (point.dx < xMin) xMin = point.dx;
-      if (point.dy > yMax) yMax = point.dy;
-      if (point.dy < yMin) yMin = point.dy;
+      if (point.x > xMax) xMax = point.x;
+      if (point.x < xMin) xMin = point.x;
+      if (point.y > yMax) yMax = point.y;
+      if (point.y < yMin) yMin = point.y;
     }
     
     return Rect.fromLTRB(xMin, yMin, xMax, yMax);
   }
   
   /// 根据索引获取顶点
-  Offset getVertex(int index) {
+  Point<double> getVertex(int index) {
     switch (index) {
       case 0: return topLeft;
       case 1: return topRight;
@@ -110,9 +110,9 @@ class QuadAnnotation {
       default: throw ArgumentError('顶点索引必须在0-3之间');
     }
   }
-  
+
   /// 根据索引设置顶点
-  void setVertex(int index, Offset vertex) {
+  void setVertex(int index, Point<double> vertex) {
     switch (index) {
       case 0: topLeft = vertex; break;
       case 1: topRight = vertex; break;
@@ -127,29 +127,21 @@ class QuadAnnotation {
   /// dx < 0, dy < 0 表示向外扩大
   QuadAnnotation insetBy({required double dx, required double dy}) {
     return QuadAnnotation(
-      topLeft: Offset(topLeft.dx + dx, topLeft.dy + dy),
-      topRight: Offset(topRight.dx - dx, topRight.dy + dy),
-      bottomRight: Offset(bottomRight.dx - dx, bottomRight.dy - dy),
-      bottomLeft: Offset(bottomLeft.dx + dx, bottomLeft.dy - dy),
+      topLeft: Point<double>(topLeft.x + dx, topLeft.y + dy),
+      topRight: Point<double>(topRight.x - dx, topRight.y + dy),
+      bottomRight: Point<double>(bottomRight.x - dx, bottomRight.y - dy),
+      bottomLeft: Point<double>(bottomLeft.x + dx, bottomLeft.y - dy),
     );
   }
   
   /// 矩形偏移
   QuadAnnotation offsetBy({required double dx, required double dy}) {
     return QuadAnnotation(
-      topLeft: Offset(topLeft.dx + dx, topLeft.dy + dy),
-      topRight: Offset(topRight.dx + dx, topRight.dy + dy),
-      bottomRight: Offset(bottomRight.dx + dx, bottomRight.dy + dy),
-      bottomLeft: Offset(bottomLeft.dx + dx, bottomLeft.dy + dy),
+      topLeft: Point<double>(topLeft.x + dx, topLeft.y + dy),
+      topRight: Point<double>(topRight.x + dx, topRight.y + dy),
+      bottomRight: Point<double>(bottomRight.x + dx, bottomRight.y + dy),
+      bottomLeft: Point<double>(bottomLeft.x + dx, bottomLeft.y + dy),
     );
-  }
-  
-  /// 检查是否为默认的固定坐标
-  bool get isFixedCoordinates {
-    return topLeft == const Offset(100, 100) &&
-           topRight == const Offset(300, 120) &&
-           bottomRight == const Offset(280, 300) &&
-           bottomLeft == const Offset(80, 280);
   }
   
   /// 复制当前矩形特征
@@ -212,19 +204,19 @@ class QuadAnnotation {
     
     // 直接根据坐标位置分配角色
     // 找到最小Y坐标（最上方）和最大Y坐标（最下方）
-    vertices.sort((a, b) => a.dy.compareTo(b.dy));
+    vertices.sort((a, b) => a.y.compareTo(b.y));
     
     // 前两个是上方的点，后两个是下方的点
     final topPoints = [vertices[0], vertices[1]];
     final bottomPoints = [vertices[2], vertices[3]];
     
     // 在上方的点中，X坐标小的是topLeft，X坐标大的是topRight
-    topPoints.sort((a, b) => a.dx.compareTo(b.dx));
+    topPoints.sort((a, b) => a.x.compareTo(b.x));
     final newTopLeft = topPoints[0];
     final newTopRight = topPoints[1];
     
     // 在下方的点中，X坐标小的是bottomLeft，X坐标大的是bottomRight
-    bottomPoints.sort((a, b) => a.dx.compareTo(b.dx));
+    bottomPoints.sort((a, b) => a.x.compareTo(b.x));
     final newBottomLeft = bottomPoints[0];
     final newBottomRight = bottomPoints[1];
     
@@ -241,14 +233,14 @@ class QuadAnnotation {
   /// p1, p2: 要检查的两个点
   /// l1, l2: 构成直线的两个点
   bool _checkIfOppositeSides({
-    required Offset p1,
-    required Offset p2,
-    required Offset l1,
-    required Offset l2,
+    required Point<double> p1,
+    required Point<double> p2,
+    required Point<double> l1,
+    required Point<double> l2,
   }) {
     // 使用直线方程计算点到直线的位置关系
-    final part1 = (l1.dy - l2.dy) * (p1.dx - l1.dx) + (l2.dx - l1.dx) * (p1.dy - l1.dy);
-    final part2 = (l1.dy - l2.dy) * (p2.dx - l1.dx) + (l2.dx - l1.dx) * (p2.dy - l1.dy);
+    final part1 = (l1.y - l2.y) * (p1.x - l1.x) + (l2.x - l1.x) * (p1.y - l1.y);
+    final part2 = (l1.y - l2.y) * (p2.x - l1.x) + (l2.x - l1.x) * (p2.y - l1.y);
     
     // 如果两个值的乘积小于0，说明两点在直线两侧
     return (part1 * part2) < 0;
