@@ -11,11 +11,14 @@ class AnnotationPage extends StatefulWidget {
   final dynamic imageSource;
   /// 图片源类型：'asset', 'file', 'ui_image'
   final String sourceType;
+  /// 初始四边形点位数据（可选）
+  final QuadAnnotation? initialRectangle;
   
   const AnnotationPage({
     super.key,
     required this.imageSource,
     required this.sourceType,
+    this.initialRectangle,
   });
 
   @override
@@ -23,16 +26,8 @@ class AnnotationPage extends StatefulWidget {
 }
 
 class _AnnotationPageState extends State<AnnotationPage> {
-  /// 当前四个顶点的坐标（视图坐标）
-  RectangleFeature currentRectangle = RectangleFeature(
-    topLeft: const Offset(100, 100),
-    topRight: const Offset(300, 120),
-    bottomRight: const Offset(280, 300),
-    bottomLeft: const Offset(80, 280),
-  );
-
-  /// 当前顶点的图片真实坐标
-  List<Offset> currentImageVertices = [];
+  /// 当前四个顶点的坐标（图片真实坐标）
+  QuadAnnotation? currentRectangle;
 
   /// 标注组件的Key，用于获取和设置顶点坐标
   final GlobalKey<QuadAnnotatorBoxState> _boxKey =
@@ -64,6 +59,10 @@ class _AnnotationPageState extends State<AnnotationPage> {
   @override
   void initState() {
     super.initState();
+    // 如果传入了初始点位数据，则设置为当前矩形
+    if (widget.initialRectangle != null) {
+      currentRectangle = widget.initialRectangle;
+    }
   }
 
   @override
@@ -148,7 +147,6 @@ class _AnnotationPageState extends State<AnnotationPage> {
                   },
                   dragStatus: _dragStatus,
                   currentRectangle: currentRectangle,
-                  currentImageVertices: currentImageVertices,
                   onGetVertices: _getVertices,
                   onGetImageVertices: _getImageVertices,
                   onSetRandomVertices: _setRandomVertices,
@@ -174,13 +172,13 @@ class _AnnotationPageState extends State<AnnotationPage> {
         image: widget.imageSource as ui.Image,
         width: constraints.maxWidth,
         height: constraints.maxHeight,
-        initialRectangle: currentRectangle,
+        rectangle: currentRectangle,
         onVerticesChanged: _onVerticesChanged,
         onVertexDragStart: _onVertexDragStart,
         onVertexDragEnd: _onVertexDragEnd,
         onEdgeDragStart: _onEdgeDragStart,
         onEdgeDragEnd: _onEdgeDragEnd,
-        fillColor: _maskColor.alpha > 0 ? Colors.transparent : Colors.red.withOpacity(0.1),
+        fillColor: (_maskColor.a * 255.0).round() & 0xff > 0 ? Colors.transparent : Colors.red.withValues(alpha: 0.1),
         vertexColor: Colors.white,
         maskColor: _maskColor,
         highlightColor: Colors.yellow,
@@ -224,13 +222,13 @@ class _AnnotationPageState extends State<AnnotationPage> {
         imageProvider: imageProvider,
         width: constraints.maxWidth,
         height: constraints.maxHeight,
-        initialRectangle: currentRectangle,
+        rectangle: currentRectangle,
         onVerticesChanged: _onVerticesChanged,
         onVertexDragStart: _onVertexDragStart,
         onVertexDragEnd: _onVertexDragEnd,
         onEdgeDragStart: _onEdgeDragStart,
         onEdgeDragEnd: _onEdgeDragEnd,
-        fillColor: _maskColor.alpha > 0 ? Colors.transparent : Colors.red.withOpacity(0.1),
+        fillColor: (_maskColor.a * 255.0).round() & 0xff > 0 ? Colors.transparent : Colors.red.withValues(alpha: 0.1),
         vertexColor: Colors.white,
         maskColor: _maskColor,
         highlightColor: Colors.yellow,
@@ -259,22 +257,12 @@ class _AnnotationPageState extends State<AnnotationPage> {
   }
 
   /// 顶点坐标变化时的回调函数
-  void _onVerticesChanged(RectangleFeature rectangle) {
+  /// 顶点坐标变化时的回调函数
+  void _onVerticesChanged(QuadAnnotation rectangle) {
     setState(() {
+      // 直接使用QuadAnnotation类型
       currentRectangle = rectangle;
     });
-    
-    // 同时获取图片真实坐标
-    try {
-      final imageVertices = _boxKey.currentState?.getImageVertices();
-      if (imageVertices != null) {
-        setState(() {
-          currentImageVertices = imageVertices;
-        });
-      }
-    } catch (e) {
-      print('获取图片坐标失败: $e');
-    }
   }
   
   /// 顶点拖动开始时的回调函数
@@ -352,42 +340,57 @@ class _AnnotationPageState extends State<AnnotationPage> {
   
   /// 获取当前顶点的图片真实坐标
   void _getImageVertices() {
-    try {
-      final imageVertices = _boxKey.currentState?.getImageVertices();
-      if (imageVertices != null) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('当前顶点坐标（图片真实坐标）'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: imageVertices.asMap().entries.map((entry) {
-                final index = entry.key;
-                final vertex = entry.value;
-                return Text(
-                  '顶点${index + 1}: (${vertex.dx.toStringAsFixed(2)}, ${vertex.dy.toStringAsFixed(2)})',
-                  style: const TextStyle(color: Colors.green),
-                );
-              }).toList(),
+    if (currentRectangle == null) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('提示'),
+          content: const Text('当前没有矩形数据，请先进行标注。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('确定'),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('确定'),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('获取图片坐标失败: $e'),
-          backgroundColor: Colors.red,
+          ],
         ),
       );
+      return;
     }
+
+    // 现在currentRectangle已经是图片真实坐标
+    final imageVertices = [
+      currentRectangle!.topLeft,
+      currentRectangle!.topRight,
+      currentRectangle!.bottomRight,
+      currentRectangle!.bottomLeft,
+    ];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('当前顶点坐标（图片真实坐标）'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: imageVertices.asMap().entries.map((entry) {
+            final index = entry.key;
+            final vertex = entry.value;
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Text(
+                '顶点${index + 1}: (${vertex.dx.toStringAsFixed(2)}, ${vertex.dy.toStringAsFixed(2)})',
+                style: const TextStyle(fontFamily: 'monospace'),
+              ),
+            );
+          }).toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// 设置随机顶点位置
@@ -403,28 +406,22 @@ class _AnnotationPageState extends State<AnnotationPage> {
     _boxKey.currentState?.setVertices(newVertices);
   }
 
-  /// 确认标注，返回图片和RectangleFeature数据
+  /// 确认标注，返回图片和QuadAnnotation数据
   void _confirmAnnotation() {
     try {
-      // 获取当前顶点的图片真实坐标（而不是UI坐标）
-      final imageVertices = _boxKey.currentState?.getImageVertices();
-      if (imageVertices == null || imageVertices.length != 4) {
+      if (currentRectangle == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('无法获取图片真实坐标'),
+            content: Text('请先进行矩形标注'),
             backgroundColor: Colors.red,
           ),
         );
         return;
       }
 
-      // 创建RectangleFeature对象（使用图片真实坐标）
-      final rectangleFeature = RectangleFeature(
-        topLeft: imageVertices[0],
-        topRight: imageVertices[1],
-        bottomRight: imageVertices[2],
-        bottomLeft: imageVertices[3],
-      );
+      // 现在currentRectangle已经是图片真实坐标的QuadAnnotation类型
+      final rectangleFeature = currentRectangle!;
+      final imageVertices = rectangleFeature.vertices;
 
       // 创建返回数据
       final annotationResult = {

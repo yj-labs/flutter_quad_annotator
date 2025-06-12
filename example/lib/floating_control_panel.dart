@@ -49,11 +49,8 @@ class FloatingControlPanel extends StatefulWidget {
   /// 拖动状态文本
   final String dragStatus;
   
-  /// 当前矩形顶点坐标
-  final RectangleFeature currentRectangle;
-  
-  /// 当前图片真实坐标
-  final List<Offset> currentImageVertices;
+  /// 当前矩形顶点坐标（图片真实坐标）
+  final QuadAnnotation? currentRectangle;
   
   /// 获取视图坐标回调
   final VoidCallback onGetVertices;
@@ -87,8 +84,7 @@ class FloatingControlPanel extends StatefulWidget {
     required this.magnifierShape,
     required this.onMagnifierShapeChanged,
     required this.dragStatus,
-    required this.currentRectangle,
-    required this.currentImageVertices,
+    this.currentRectangle,
     required this.onGetVertices,
     required this.onGetImageVertices,
     required this.onSetRandomVertices,
@@ -112,11 +108,11 @@ class _FloatingControlPanelState extends State<FloatingControlPanel> {
           maxHeight: widget.maxHeight - 100,
         ),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.95),
+          color: Colors.white.withValues(alpha: 0.95),
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -222,7 +218,7 @@ class _FloatingControlPanelState extends State<FloatingControlPanel> {
             ),
             const Spacer(),
             Switch(
-              value: widget.maskColor.alpha > 0,
+              value: (widget.maskColor.a * 255.0).round() & 0xff > 0,
               onChanged: (value) {
                 widget.onMaskColorChanged(
                   value ? const Color(0x80000000) : Colors.transparent,
@@ -404,61 +400,49 @@ class _FloatingControlPanelState extends State<FloatingControlPanel> {
           style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
-        // 视图坐标
+        // 图片真实坐标
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.blue.shade50,
+            color: Colors.green.shade50,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                '视图坐标:',
+                '图片真实坐标:',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Colors.blue,
+                  color: Colors.green,
                 ),
               ),
-              for (int i = 0; i < widget.currentRectangle.vertices.length; i++)
+              if (widget.currentRectangle != null) ...[
                 Text(
-                  '点${i + 1}: (${widget.currentRectangle.vertices[i].dx.toStringAsFixed(1)}, ${widget.currentRectangle.vertices[i].dy.toStringAsFixed(1)})',
-                  style: const TextStyle(fontSize: 11),
+                  '点1: (${widget.currentRectangle!.topLeft.dx.toStringAsFixed(1)}, ${widget.currentRectangle!.topLeft.dy.toStringAsFixed(1)})',
+                  style: const TextStyle(fontSize: 11, color: Colors.green),
+                ),
+                Text(
+                  '点2: (${widget.currentRectangle!.topRight.dx.toStringAsFixed(1)}, ${widget.currentRectangle!.topRight.dy.toStringAsFixed(1)})',
+                  style: const TextStyle(fontSize: 11, color: Colors.green),
+                ),
+                Text(
+                  '点3: (${widget.currentRectangle!.bottomRight.dx.toStringAsFixed(1)}, ${widget.currentRectangle!.bottomRight.dy.toStringAsFixed(1)})',
+                  style: const TextStyle(fontSize: 11, color: Colors.green),
+                ),
+                Text(
+                  '点4: (${widget.currentRectangle!.bottomLeft.dx.toStringAsFixed(1)}, ${widget.currentRectangle!.bottomLeft.dy.toStringAsFixed(1)})',
+                  style: const TextStyle(fontSize: 11, color: Colors.green),
+                ),
+              ] else
+                const Text(
+                  '暂无坐标数据',
+                  style: TextStyle(fontSize: 11, color: Colors.grey),
                 ),
             ],
           ),
         ),
-        // 图片真实坐标（如果存在）
-        if (widget.currentImageVertices.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '图片真实坐标:',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.green,
-                  ),
-                ),
-                for (int i = 0; i < widget.currentImageVertices.length; i++)
-                  Text(
-                    '点${i + 1}: (${widget.currentImageVertices[i].dx.toStringAsFixed(1)}, ${widget.currentImageVertices[i].dy.toStringAsFixed(1)})',
-                    style: const TextStyle(fontSize: 11, color: Colors.green),
-                  ),
-              ],
-            ),
-          ),
-        ],
       ],
     );
   }

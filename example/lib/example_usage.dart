@@ -129,7 +129,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
                     subtitle,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
                 ],
@@ -221,11 +221,37 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
     }
   }
 
+  /// 跳转到标注页面进行编辑（带初始点位数据）
+  Future<void> _navigateToEditAnnotation({
+    required dynamic imageSource,
+    required String sourceType,
+    required QuadAnnotation initialRectangle,
+  }) async {
+    if (mounted) {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AnnotationPage(
+            imageSource: imageSource,
+            sourceType: sourceType,
+            initialRectangle: initialRectangle,
+          ),
+        ),
+      );
+      
+      if (result != null && mounted) {
+        setState(() {
+          _annotationResult = result;
+        });
+      }
+    }
+  }
+
   /// 构建标注结果显示区域
   List<Widget> _buildResultSection() {
     if (_annotationResult == null) return [];
     
-    final rectangleFeature = _annotationResult!['rectangleFeature'] as RectangleFeature;
+    final rectangleFeature = _annotationResult!['rectangleFeature'] as QuadAnnotation;
     final imageSource = _annotationResult!['imageSource'];
     final sourceType = _annotationResult!['sourceType'] as String;
     
@@ -256,17 +282,24 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
       
       const SizedBox(height: 16),
       
-      // 图片预览
-      Container(
-        width: double.infinity,
-        height: 200,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(8),
+      // 图片预览（可点击跳转到标注页面）
+      GestureDetector(
+        onTap: () => _navigateToEditAnnotation(
+          imageSource: imageSource,
+          sourceType: sourceType,
+          initialRectangle: rectangleFeature,
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: _buildImageWidget(imageSource, sourceType),
+        child: Container(
+          width: double.infinity,
+          height: 200,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: _buildImageWidget(imageSource, sourceType),
+          ),
         ),
       ),
       

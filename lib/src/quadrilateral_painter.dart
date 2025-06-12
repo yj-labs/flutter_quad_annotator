@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
-import 'rectangle_feature.dart';
+import 'quad_annotation.dart';
 import 'types.dart';
 
 /// 四边形绘制器
 /// 负责在Canvas上绘制四边形选区、顶点、遮罩和放大镜效果
 class QuadrilateralPainter extends CustomPainter {
   final List<Offset> vertices;
-  final RectangleFeature rectangle;
+  final QuadAnnotation rectangle;
   final int draggedVertexIndex;
   final int draggedEdgeIndex;
   final Color borderColor;

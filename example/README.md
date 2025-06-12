@@ -48,8 +48,8 @@ QuadAnnotatorBox(
   // 背景颜色
   backgroundColor: Colors.grey[100]!,
   
-  // 初始四边形
-  initialRectangle: _currentRectangle,
+  // 初始四边形（图片坐标系）
+  rectangle: _currentRectangle,
   
   // 回调函数
   onVerticesChanged: _onVerticesChanged,

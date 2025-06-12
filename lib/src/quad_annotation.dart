@@ -1,8 +1,10 @@
+import 'dart:math';
 import 'dart:ui';
+import 'package:rectangle_detector/rectangle_detector.dart';
 
-/// 四边形特征类，用于存储和操作四个顶点坐标
+/// 四边形注释类，用于存储和操作四个顶点坐标
 /// 替代List<Offset>以提高代码严谨性，防止意外增删顶点
-class RectangleFeature {
+class QuadAnnotation {
   /// 当前四边形是否有错误
   bool _hasError = false;
   
@@ -21,20 +23,20 @@ class RectangleFeature {
   Offset bottomRight;
   
   /// 构造函数
-  RectangleFeature({
+  QuadAnnotation({
     this.topLeft = Offset.zero,
     this.topRight = Offset.zero,
     this.bottomLeft = Offset.zero,
     this.bottomRight = Offset.zero,
   });
   
-  /// 从顶点列表创建矩形特征
+  /// 从顶点列表创建四边形注释
   /// 顶点顺序：[左上, 右上, 右下, 左下]
-  factory RectangleFeature.fromVertices(List<Offset> vertices) {
+  factory QuadAnnotation.fromVertices(List<Offset> vertices) {
     if (vertices.length != 4) {
       throw ArgumentError('顶点列表必须包含4个点');
     }
-    return RectangleFeature(
+    return QuadAnnotation(
       topLeft: vertices[0],
       topRight: vertices[1],
       bottomRight: vertices[2],
@@ -43,11 +45,11 @@ class RectangleFeature {
   }
   
   /// 创建默认矩形（基于给定尺寸和内边距）
-  factory RectangleFeature.defaultRectangle({
+  factory QuadAnnotation.defaultRectangle({
     required Size containerSize,
     double padding = 10.0,
   }) {
-    return RectangleFeature(
+    return QuadAnnotation(
       topLeft: Offset(padding, padding),
       topRight: Offset(containerSize.width - padding, padding),
       bottomRight: Offset(containerSize.width - padding, containerSize.height - padding),
@@ -55,9 +57,29 @@ class RectangleFeature {
     );
   }
   
+  /// 从RectangleFeature创建QuadAnnotation
+  factory QuadAnnotation.fromRectangleFeature(RectangleFeature rect) {
+    return QuadAnnotation(
+      topLeft: Offset(rect.topLeft.x, rect.topLeft.y),
+      topRight: Offset(rect.topRight.x, rect.topRight.y),
+      bottomLeft: Offset(rect.bottomLeft.x, rect.bottomLeft.y),
+      bottomRight: Offset(rect.bottomRight.x, rect.bottomRight.y),
+    );
+  }
+  
   /// 转换为顶点列表
   /// 返回顺序：[左上, 右上, 右下, 左下]
   List<Offset> get vertices => [topLeft, topRight, bottomRight, bottomLeft];
+  
+  /// 转换为RectangleFeature
+  RectangleFeature toRectangleFeature() {
+    return RectangleFeature(
+      topLeft: Point(topLeft.dx, topLeft.dy),
+      topRight: Point(topRight.dx, topRight.dy),
+      bottomLeft: Point(bottomLeft.dx, bottomLeft.dy),
+      bottomRight: Point(bottomRight.dx, bottomRight.dy),
+    );
+  }
   
   /// 获取边界矩形
   Rect get bounds {
@@ -103,8 +125,8 @@ class RectangleFeature {
   /// 生成一个扩大/缩小边距的矩形框
   /// dx > 0, dy > 0 表示向内缩小
   /// dx < 0, dy < 0 表示向外扩大
-  RectangleFeature insetBy({required double dx, required double dy}) {
-    return RectangleFeature(
+  QuadAnnotation insetBy({required double dx, required double dy}) {
+    return QuadAnnotation(
       topLeft: Offset(topLeft.dx + dx, topLeft.dy + dy),
       topRight: Offset(topRight.dx - dx, topRight.dy + dy),
       bottomRight: Offset(bottomRight.dx - dx, bottomRight.dy - dy),
@@ -113,8 +135,8 @@ class RectangleFeature {
   }
   
   /// 矩形偏移
-  RectangleFeature offsetBy({required double dx, required double dy}) {
-    return RectangleFeature(
+  QuadAnnotation offsetBy({required double dx, required double dy}) {
+    return QuadAnnotation(
       topLeft: Offset(topLeft.dx + dx, topLeft.dy + dy),
       topRight: Offset(topRight.dx + dx, topRight.dy + dy),
       bottomRight: Offset(bottomRight.dx + dx, bottomRight.dy + dy),
@@ -131,8 +153,8 @@ class RectangleFeature {
   }
   
   /// 复制当前矩形特征
-  RectangleFeature copy() {
-    return RectangleFeature(
+  QuadAnnotation copy() {
+    return QuadAnnotation(
       topLeft: topLeft,
       topRight: topRight,
       bottomRight: bottomRight,
@@ -144,7 +166,7 @@ class RectangleFeature {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is RectangleFeature &&
+    return other is QuadAnnotation &&
            other.topLeft == topLeft &&
            other.topRight == topRight &&
            other.bottomRight == bottomRight &&
@@ -234,6 +256,6 @@ class RectangleFeature {
 
   @override
   String toString() {
-    return 'RectangleFeature(topLeft: $topLeft, topRight: $topRight, bottomRight: $bottomRight, bottomLeft: $bottomLeft, hasError: $_hasError)';
+    return 'QuadAnnotation(topLeft: $topLeft, topRight: $topRight, bottomRight: $bottomRight, bottomLeft: $bottomLeft, hasError: $_hasError)';
   }
 }

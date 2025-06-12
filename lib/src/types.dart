@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'rectangle_feature.dart';
+import 'package:rectangle_detector/rectangle_detector.dart';
+import 'quad_annotation.dart';
 
 /// 放大镜位置模式
 enum MagnifierPositionMode {
@@ -30,7 +31,8 @@ enum MagnifierShape {
 }
 
 /// 四边形裁剪组件的回调函数类型定义
-typedef OnVerticesChanged = void Function(RectangleFeature rectangle);
+/// 回调参数为图片真实坐标系的QuadAnnotation
+typedef OnVerticesChanged = void Function(QuadAnnotation rectangle);
 
 /// 顶点拖动开始时的回调函数类型定义
 typedef OnVertexDragStart = void Function(int vertexIndex, Offset position);
