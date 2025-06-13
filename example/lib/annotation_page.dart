@@ -10,11 +10,13 @@ import 'floating_control_panel.dart';
 class AnnotationPage extends StatefulWidget {
   /// 图片数据源，可以是Asset路径或File对象
   final dynamic imageSource;
+
   /// 图片源类型：'asset', 'file', 'ui_image'
   final String sourceType;
+
   /// 初始四边形点位数据（可选）
   final QuadAnnotation? initialRectangle;
-  
+
   const AnnotationPage({
     super.key,
     required this.imageSource,
@@ -32,30 +34,31 @@ class _AnnotationPageState extends State<AnnotationPage> {
 
   /// 标注组件的controller，用于获取和设置顶点坐标
   final QuadAnnotatorController _controller = QuadAnnotatorController();
-  
+
   /// 遮罩颜色（透明表示关闭遮罩效果）
   Color _maskColor = const Color(0x80000000);
-  
+
   /// 当前拖动状态信息
   String _dragStatus = '未拖动';
-  
+
   /// 拖动历史记录
   final List<String> _dragHistory = [];
-  
+
   /// 控制面板是否折叠
   bool _isPanelCollapsed = true;
-  
+
   /// 是否启用放大镜效果
   bool _enableMagnifier = true;
-  
+
   /// 是否启用呼吸灯动画效果
   bool _enableBreathing = true;
-  
+
   /// 放大镜位置模式
   MagnifierPositionMode _magnifierPositionMode = MagnifierPositionMode.center;
-  MagnifierCornerPosition _magnifierCornerPosition = MagnifierCornerPosition.topLeft;
+  MagnifierCornerPosition _magnifierCornerPosition =
+      MagnifierCornerPosition.topLeft;
   MagnifierShape _magnifierShape = MagnifierShape.circle;
-  
+
   @override
   void initState() {
     super.initState();
@@ -176,7 +179,9 @@ class _AnnotationPageState extends State<AnnotationPage> {
         onVertexDragEnd: _onVertexDragEnd,
         onEdgeDragStart: _onEdgeDragStart,
         onEdgeDragEnd: _onEdgeDragEnd,
-        fillColor: (_maskColor.a * 255.0).round() & 0xff > 0 ? Colors.transparent : Colors.red.withValues(alpha: 0.1),
+        fillColor: (_maskColor.a * 255.0).round() & 0xff > 0
+            ? Colors.transparent
+            : Colors.red.withValues(alpha: 0.1),
         vertexColor: Colors.white,
         maskColor: _maskColor,
         highlightColor: Colors.yellow,
@@ -213,7 +218,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
         default:
           throw ArgumentError('Unsupported source type: ${widget.sourceType}');
       }
-      
+
       return QuadAnnotatorBox.fromProvider(
         imageProvider: imageProvider,
         width: constraints.maxWidth,
@@ -225,7 +230,9 @@ class _AnnotationPageState extends State<AnnotationPage> {
         onVertexDragEnd: _onVertexDragEnd,
         onEdgeDragStart: _onEdgeDragStart,
         onEdgeDragEnd: _onEdgeDragEnd,
-        fillColor: (_maskColor.a * 255.0).round() & 0xff > 0 ? Colors.transparent : Colors.red.withValues(alpha: 0.1),
+        fillColor: (_maskColor.a * 255.0).round() & 0xff > 0
+            ? Colors.transparent
+            : Colors.red.withValues(alpha: 0.1),
         vertexColor: Colors.white,
         maskColor: _maskColor,
         highlightColor: Colors.yellow,
@@ -260,50 +267,55 @@ class _AnnotationPageState extends State<AnnotationPage> {
       currentRectangle = rectangle;
     });
   }
-  
+
   /// 顶点拖动开始时的回调函数
   void _onVertexDragStart(int vertexIndex, Point<double> position) {
     setState(() {
       _dragStatus = '正在拖动顶点 ${vertexIndex + 1}';
     });
-    _addDragHistory('开始拖动顶点 ${vertexIndex + 1} 从位置 (${position.x.toStringAsFixed(1)}, ${position.y.toStringAsFixed(1)})');
+    _addDragHistory(
+        '开始拖动顶点 ${vertexIndex + 1} 从位置 (${position.x.toStringAsFixed(1)}, ${position.y.toStringAsFixed(1)})');
   }
-  
+
   /// 顶点拖动结束时的回调函数
   void _onVertexDragEnd(int vertexIndex, Point<double> position) {
     setState(() {
       _dragStatus = '未拖动';
     });
-    _addDragHistory('结束拖动顶点 ${vertexIndex + 1} 到位置 (${position.x.toStringAsFixed(1)}, ${position.y.toStringAsFixed(1)})');
+    _addDragHistory(
+        '结束拖动顶点 ${vertexIndex + 1} 到位置 (${position.x.toStringAsFixed(1)}, ${position.y.toStringAsFixed(1)})');
   }
-  
+
   /// 边拖动开始时的回调函数
   void _onEdgeDragStart(int edgeIndex, Point<double> position) {
     setState(() {
       _dragStatus = '正在拖动边 ${edgeIndex + 1}';
     });
-    _addDragHistory('开始拖动边 ${edgeIndex + 1} 从位置 (${position.x.toStringAsFixed(1)}, ${position.y.toStringAsFixed(1)})');
+    _addDragHistory(
+        '开始拖动边 ${edgeIndex + 1} 从位置 (${position.x.toStringAsFixed(1)}, ${position.y.toStringAsFixed(1)})');
   }
-  
+
   /// 边拖动结束时的回调函数
   void _onEdgeDragEnd(int edgeIndex, Point<double> position) {
     setState(() {
       _dragStatus = '未拖动';
     });
-    _addDragHistory('结束拖动边 ${edgeIndex + 1} 到位置 (${position.x.toStringAsFixed(1)}, ${position.y.toStringAsFixed(1)})');
+    _addDragHistory(
+        '结束拖动边 ${edgeIndex + 1} 到位置 (${position.x.toStringAsFixed(1)}, ${position.y.toStringAsFixed(1)})');
   }
-  
+
   /// 添加拖动历史记录
   void _addDragHistory(String action) {
     setState(() {
-      _dragHistory.add('${DateTime.now().toString().substring(11, 19)} - $action');
+      _dragHistory
+          .add('${DateTime.now().toString().substring(11, 19)} - $action');
       // 只保留最近10条记录
       if (_dragHistory.length > 10) {
         _dragHistory.removeAt(0);
       }
     });
   }
-  
+
   /// 获取当前顶点的图片真实坐标
   void _getImageVertices() {
     final vertices = _controller.vertices;

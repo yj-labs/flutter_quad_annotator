@@ -14,10 +14,10 @@ class ExampleUsagePage extends StatefulWidget {
 
 class _ExampleUsagePageState extends State<ExampleUsagePage> {
   final ImagePicker _picker = ImagePicker();
-  
+
   /// 标注结果数据
   Map<String, dynamic>? _annotationResult;
-  
+
   /// 是否显示结果
   bool get _hasResult => _annotationResult != null;
 
@@ -35,7 +35,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
             children: [
               // 标注结果显示区域
               if (_hasResult) ..._buildResultSection(),
-              
+
               // 图片选择区域
               const SizedBox(height: 20),
               const Text(
@@ -46,7 +46,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
                 ),
               ),
               const SizedBox(height: 40),
-              
+
               // 静态图片按钮
               _buildOptionButton(
                 context,
@@ -56,9 +56,9 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
                 color: Colors.blue,
                 onPressed: _useStaticImage,
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // 拍照按钮
               _buildOptionButton(
                 context,
@@ -68,9 +68,9 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
                 color: Colors.green,
                 onPressed: _takePhoto,
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // 从相册选择按钮
               _buildOptionButton(
                 context,
@@ -165,7 +165,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
       errorMessage: '选择图片失败',
     );
   }
-  
+
   /// 选择图片并导航到裁剪页面的通用方法
   Future<void> _pickImageAndNavigate({
     required ImageSource source,
@@ -173,11 +173,8 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
   }) async {
     try {
       final XFile? image = await _picker.pickImage(
-        source: source,
-        maxWidth: 3840,
-        maxHeight: 3840
-      );
-      
+          source: source, maxWidth: 3840, maxHeight: 3840);
+
       if (image != null) {
         final File file = File(image.path);
         await _navigateToCropPage(
@@ -196,7 +193,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
       }
     }
   }
-  
+
   /// 导航到裁剪页面并处理返回结果的通用方法
   Future<void> _navigateToCropPage({
     required dynamic imageSource,
@@ -212,7 +209,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
           ),
         ),
       );
-      
+
       if (result != null && mounted) {
         setState(() {
           _annotationResult = result;
@@ -238,7 +235,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
           ),
         ),
       );
-      
+
       if (result != null && mounted) {
         setState(() {
           _annotationResult = result;
@@ -250,11 +247,12 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
   /// 构建标注结果显示区域
   List<Widget> _buildResultSection() {
     if (_annotationResult == null) return [];
-    
-    final rectangleFeature = _annotationResult!['rectangleFeature'] as QuadAnnotation;
+
+    final rectangleFeature =
+        _annotationResult!['rectangleFeature'] as QuadAnnotation;
     final imageSource = _annotationResult!['imageSource'];
     final sourceType = _annotationResult!['sourceType'] as String;
-    
+
     return [
       // 标题和清除按钮
       Row(
@@ -279,9 +277,9 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
           ),
         ],
       ),
-      
+
       const SizedBox(height: 16),
-      
+
       // 图片预览（可点击跳转到标注页面）
       GestureDetector(
         onTap: () => _navigateToEditAnnotation(
@@ -306,9 +304,9 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
           ),
         ),
       ),
-      
+
       const SizedBox(height: 16),
-      
+
       // 四边形顶点信息
       Container(
         width: double.infinity,
@@ -329,26 +327,33 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
               ),
             ),
             const SizedBox(height: 8),
-            Text('左上角: (${rectangleFeature.topLeft.x.toStringAsFixed(1)}, ${rectangleFeature.topLeft.y.toStringAsFixed(1)})', style: const TextStyle(color: Colors.green)),
-            Text('右上角: (${rectangleFeature.topRight.x.toStringAsFixed(1)}, ${rectangleFeature.topRight.y.toStringAsFixed(1)})', style: const TextStyle(color: Colors.green)),
-            Text('右下角: (${rectangleFeature.bottomRight.x.toStringAsFixed(1)}, ${rectangleFeature.bottomRight.y.toStringAsFixed(1)})', style: const TextStyle(color: Colors.green)),
-            Text('左下角: (${rectangleFeature.bottomLeft.x.toStringAsFixed(1)}, ${rectangleFeature.bottomLeft.y.toStringAsFixed(1)})', style: const TextStyle(color: Colors.green))
+            Text(
+                '左上角: (${rectangleFeature.topLeft.x.toStringAsFixed(1)}, ${rectangleFeature.topLeft.y.toStringAsFixed(1)})',
+                style: const TextStyle(color: Colors.green)),
+            Text(
+                '右上角: (${rectangleFeature.topRight.x.toStringAsFixed(1)}, ${rectangleFeature.topRight.y.toStringAsFixed(1)})',
+                style: const TextStyle(color: Colors.green)),
+            Text(
+                '右下角: (${rectangleFeature.bottomRight.x.toStringAsFixed(1)}, ${rectangleFeature.bottomRight.y.toStringAsFixed(1)})',
+                style: const TextStyle(color: Colors.green)),
+            Text(
+                '左下角: (${rectangleFeature.bottomLeft.x.toStringAsFixed(1)}, ${rectangleFeature.bottomLeft.y.toStringAsFixed(1)})',
+                style: const TextStyle(color: Colors.green))
           ],
         ),
       ),
-      
+
       const SizedBox(height: 20),
       const Divider(),
     ];
   }
-  
+
   /// 构建带标注点的图片组件
   Widget _buildAnnotatedImageWidget({
     required dynamic imageSource,
     required String sourceType,
     required QuadAnnotation rectangleFeature,
   }) {
-    
     return LayoutBuilder(
       builder: (context, constraints) {
         // 根据sourceType创建对应的ImageProvider
@@ -363,7 +368,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
           default:
             throw ArgumentError('Unsupported source type: $sourceType');
         }
-        
+
         // 使用UniqueKey强制每次重建组件
         return QuadAnnotatorBox.fromProvider(
           imageProvider: imageProvider,
@@ -381,5 +386,4 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
       },
     );
   }
-
 }

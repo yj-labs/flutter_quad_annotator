@@ -6,58 +6,58 @@ import 'package:flutter_quad_annotator/flutter_quad_annotator.dart';
 class FloatingControlPanel extends StatefulWidget {
   /// 面板是否折叠
   final bool isPanelCollapsed;
-  
+
   /// 面板折叠状态变化回调
   final ValueChanged<bool> onPanelCollapseChanged;
-  
+
   /// 镂空遮罩颜色
   final Color maskColor;
-  
+
   /// 镂空遮罩颜色变化回调
   final ValueChanged<Color> onMaskColorChanged;
-  
+
   /// 是否启用放大镜
   final bool enableMagnifier;
-  
+
   /// 放大镜启用状态变化回调
   final ValueChanged<bool> onEnableMagnifierChanged;
-  
+
   /// 是否启用呼吸灯动画
   final bool enableBreathing;
-  
+
   /// 呼吸灯动画启用状态变化回调
   final ValueChanged<bool> onEnableBreathingChanged;
-  
+
   /// 放大镜位置模式
   final MagnifierPositionMode magnifierPositionMode;
-  
+
   /// 放大镜位置模式变化回调
   final ValueChanged<MagnifierPositionMode> onMagnifierPositionModeChanged;
-  
+
   /// 放大镜角落位置
   final MagnifierCornerPosition magnifierCornerPosition;
-  
+
   /// 放大镜角落位置变化回调
   final ValueChanged<MagnifierCornerPosition> onMagnifierCornerPositionChanged;
-  
+
   /// 放大镜形状
   final MagnifierShape magnifierShape;
-  
+
   /// 放大镜形状变化回调
   final ValueChanged<MagnifierShape> onMagnifierShapeChanged;
-  
+
   /// 拖动状态文本
   final String dragStatus;
-  
+
   /// 当前矩形顶点坐标（图片真实坐标）
   final QuadAnnotation? currentRectangle;
-  
+
   /// 获取图片坐标回调
   final VoidCallback onGetVertices;
-  
+
   /// 重置顶点回调
   final VoidCallback onResetVertices;
-  
+
   /// 最大高度约束
   final double maxHeight;
 
