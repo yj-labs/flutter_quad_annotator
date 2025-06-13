@@ -5,7 +5,7 @@ import 'quad_annotation.dart';
 
 /// Offset 扩展方法
 extension OffsetExtension on Offset {
-  /// 转换为 Point<double>
+  /// 转换为 `Point<double>`
   Point<double> toPoint() => Point<double>(dx, dy);
 }
 

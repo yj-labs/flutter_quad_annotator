@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:rectangle_detector/rectangle_detector.dart';
 
 /// 四边形注释类，用于存储和操作四个顶点坐标
-/// 替代List<Offset>以提高代码严谨性，防止意外增删顶点
+/// 替代`List<Offset>`以提高代码严谨性，防止意外增删顶点
 class QuadAnnotation {
   /// 当前四边形是否有错误
   bool _hasError = false;
