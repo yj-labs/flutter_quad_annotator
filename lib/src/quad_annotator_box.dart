@@ -618,12 +618,15 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       // 验证初始四边形正确性
       _rectangle?.validateQuadrilateral();
 
-      // 触发初始矩形的顶点变化回调，让外部能够获取到初始的矩形特征点位
-      _onVerticesChanged();
-
       // 触发重建以显示矩形
       if (mounted) {
         setState(() {});
+        // 在下一帧触发初始矩形的顶点变化回调，避免在构建过程中调用setState
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _onVerticesChanged();
+          }
+        });
       }
     }
   }

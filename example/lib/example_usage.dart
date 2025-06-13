@@ -373,8 +373,8 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
           preview: true,
           enableBreathing: false,
           // 设置样式
-          vertexColor: Colors.red,
-          borderColor: Colors.blue,
+          vertexColor: Colors.white,
+          borderColor: Colors.green,
           vertexRadius: 6.0,
           borderWidth: 2.0,
         );
