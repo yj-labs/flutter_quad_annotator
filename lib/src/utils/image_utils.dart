@@ -12,10 +12,14 @@ class ImageUtils {
   /// 从ImageProvider异步加载图片
   /// [imageProvider] 图片提供者
   /// 返回加载的图片对象
-  static Future<ui.Image> loadImageFromProvider(flutter.ImageProvider imageProvider) async {
+  static Future<ui.Image> loadImageFromProvider(
+    flutter.ImageProvider imageProvider,
+  ) async {
     final Completer<ui.Image> completer = Completer<ui.Image>();
-    final flutter.ImageStream stream = imageProvider.resolve(const flutter.ImageConfiguration());
-    
+    final flutter.ImageStream stream = imageProvider.resolve(
+      const flutter.ImageConfiguration(),
+    );
+
     late flutter.ImageStreamListener listener;
     listener = flutter.ImageStreamListener(
       (flutter.ImageInfo info, bool synchronousCall) {
@@ -27,7 +31,7 @@ class ImageUtils {
         stream.removeListener(listener);
       },
     );
-    
+
     stream.addListener(listener);
     return await completer.future;
   }
@@ -44,18 +48,15 @@ class ImageUtils {
     double containerHeight,
   ) {
     // 从Image对象获取真实尺寸
-    final realSize = Size(
-      image.width.toDouble(),
-      image.height.toDouble(),
-    );
-    
+    final realSize = Size(image.width.toDouble(), image.height.toDouble());
+
     // 计算显示尺寸和偏移量（自适应缩放）
     final containerSize = Size(containerWidth, containerHeight);
     final imageAspectRatio = realSize.width / realSize.height;
     final containerAspectRatio = containerSize.width / containerSize.height;
-    
+
     double displayWidth, displayHeight, offsetX, offsetY;
-    
+
     if (imageAspectRatio > containerAspectRatio) {
       // 图片更宽，按宽度适配
       displayWidth = containerSize.width;
@@ -69,18 +70,18 @@ class ImageUtils {
       offsetX = (containerSize.width - displayWidth) / 2;
       offsetY = 0;
     }
-    
+
     // 确保偏移量不为负数
     offsetX = offsetX.clamp(0, double.infinity);
     offsetY = offsetY.clamp(0, double.infinity);
-    
+
     // 确保显示尺寸不超出容器边界
     displayWidth = displayWidth.clamp(0, containerSize.width);
     displayHeight = displayHeight.clamp(0, containerSize.height);
-    
+
     final displaySize = Size(displayWidth, displayHeight);
     final offset = Offset(offsetX, offsetY);
-    
+
     return QuadImageInfo(
       realSize: realSize,
       displaySize: displaySize,
@@ -95,7 +96,7 @@ class ImageUtils {
   static double calculateScaleRatio(Size imageSize, Size containerSize) {
     final imageAspectRatio = imageSize.width / imageSize.height;
     final containerAspectRatio = containerSize.width / containerSize.height;
-    
+
     if (imageAspectRatio > containerAspectRatio) {
       // 按宽度适配
       return containerSize.width / imageSize.width;
@@ -131,7 +132,7 @@ class ImageUtils {
   }) {
     final imageAspectRatio = imageSize.width / imageSize.height;
     final containerAspectRatio = containerSize.width / containerSize.height;
-    
+
     switch (fitMode) {
       case BoxFit.contain:
         if (imageAspectRatio > containerAspectRatio) {

@@ -72,9 +72,6 @@ class QuadAnnotatorBox extends StatefulWidget {
   /// 边框宽度
   final double borderWidth;
 
-  /// 是否显示顶点编号
-  final bool showVertexNumbers;
-
   /// 遮罩颜色（设置为透明色可关闭遮罩效果）
   final Color maskColor;
 
@@ -137,6 +134,10 @@ class QuadAnnotatorBox extends StatefulWidget {
   /// 当为 false 时，直接使用默认矩形，不进行自动检测
   final bool autoDetect;
 
+  /// 是否为预览模式
+  /// 当为 true 时，禁止手势操作、禁用放大镜、禁止自动检测矩形
+  final bool preview;
+
   /// 控制器，用于外部控制组件状态
   final QuadAnnotatorController? controller;
 
@@ -161,7 +162,6 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.highlightColor = Colors.green,
     this.vertexRadius = 8.0,
     this.borderWidth = 2.0,
-    this.showVertexNumbers = true,
     this.maskColor = Colors.transparent,
     this.breathingColor = Colors.white,
     this.breathingDuration = const Duration(seconds: 2),
@@ -182,6 +182,7 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.magnifierEdgeOffset = 20.0,
     this.magnifierShape = MagnifierShape.circle,
     this.autoDetect = true,
+    this.preview = false,
   }) : imageProvider = null;
 
   /// 从ImageProvider创建QuadAnnotatorBox的便捷构造函数
@@ -205,7 +206,6 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.highlightColor = Colors.green,
     this.vertexRadius = 8.0,
     this.borderWidth = 2.0,
-    this.showVertexNumbers = true,
     this.maskColor = Colors.transparent,
     this.breathingColor = Colors.white,
     this.breathingDuration = const Duration(seconds: 2),
@@ -226,6 +226,7 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.magnifierEdgeOffset = 20.0,
     this.magnifierShape = MagnifierShape.circle,
     this.autoDetect = true,
+    this.preview = false,
   }) : image = null;
 
   @override
@@ -262,7 +263,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
 
   /// 图片信息缓存
   QuadImageInfo? _cachedImageInfo;
-  
+
   /// 保存第一次进入时的初始坐标（图片坐标系），用于重置功能
   QuadAnnotation? _initialImageRectangleFeature;
 
@@ -342,14 +343,15 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
                   highlightColor: widget.highlightColor,
                   vertexRadius: widget.vertexRadius,
                   borderWidth: widget.borderWidth,
-                  showVertexNumbers: widget.showVertexNumbers,
                   maskColor: widget.maskColor,
                   breathingAnimation: _breathingAnimation.value,
                   breathingColor: widget.breathingColor,
                   breathingGap: widget.breathingGap,
                   breathingStrokeWidth: widget.breathingStrokeWidth,
                   enableBreathing: widget.enableBreathing,
-                  enableMagnifier: widget.enableMagnifier,
+                  enableMagnifier: widget.preview
+                      ? false
+                      : widget.enableMagnifier,
                   showMagnifier: _showMagnifier,
                   magnifierPosition: _magnifierPosition,
                   magnifierSourcePosition: _magnifierSourcePosition,
@@ -362,27 +364,33 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
                   magnifierShape: widget.magnifierShape,
                 ),
                 size: Size(widget.width, widget.height),
-                child: RawGestureDetector(
-                  gestures: {
-                    SingleTouchPanGestureRecognizer:
-                        GestureRecognizerFactoryWithHandlers<
-                          SingleTouchPanGestureRecognizer
-                        >(() => SingleTouchPanGestureRecognizer(), (
-                          SingleTouchPanGestureRecognizer instance,
-                        ) {
-                          instance
-                            ..onStart = _onPanStart
-                            ..onUpdate = _onPanUpdate
-                            ..onEnd = _onPanEnd;
-                        }),
-                  },
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width: double.infinity,
-                    height: double.infinity,
-                    color: Colors.transparent,
-                  ),
-                ),
+                child: widget.preview
+                    ? Container(
+                        width: double.infinity,
+                        height: double.infinity,
+                        color: Colors.transparent,
+                      )
+                    : RawGestureDetector(
+                        gestures: {
+                          SingleTouchPanGestureRecognizer:
+                              GestureRecognizerFactoryWithHandlers<
+                                SingleTouchPanGestureRecognizer
+                              >(() => SingleTouchPanGestureRecognizer(), (
+                                SingleTouchPanGestureRecognizer instance,
+                              ) {
+                                instance
+                                  ..onStart = _onPanStart
+                                  ..onUpdate = _onPanUpdate
+                                  ..onEnd = _onPanEnd;
+                              }),
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          width: double.infinity,
+                          height: double.infinity,
+                          color: Colors.transparent,
+                        ),
+                      ),
               ),
             ],
           );
@@ -446,6 +454,26 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   @override
   void didUpdateWidget(QuadAnnotatorBox oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    // 检查图片或图片提供者是否发生变化
+    if (oldWidget.image != widget.image ||
+        oldWidget.imageProvider != widget.imageProvider) {
+      _clearImageInfoCache();
+
+      // 按照 initState 的逻辑：优先使用 imageProvider，否则使用 image
+      if (widget.imageProvider != null) {
+        _loadedImage = null;
+        _loadImageFromProvider();
+      } else {
+        _loadedImage = widget.image;
+        _initializeRectangle();
+      }
+    }
+
+    // 检查矩形参数是否发生变化
+    if (oldWidget.rectangle != widget.rectangle) {
+      _initializeRectangle();
+    }
 
     // 如果组件尺寸发生变化，保持四边形的相对位置
     if (oldWidget.width != widget.width || oldWidget.height != widget.height) {
@@ -564,8 +592,8 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     if (_loadedImage != null) {
       QuadAnnotation? detectedRectangle;
 
-      // 如果没有提供初始矩形且启用了自动检测，尝试自动检测
-      if (widget.rectangle == null && widget.autoDetect) {
+      // 如果没有提供初始矩形且启用了自动检测且不是预览模式，尝试自动检测
+      if (widget.rectangle == null && widget.autoDetect && !widget.preview) {
         try {
           detectedRectangle = await _detectRectangleFromImage();
         } catch (e) {
@@ -583,7 +611,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       }
 
       _rectangle = initialQuad ?? detectedRectangle ?? _getDefaultRectangle();
-      
+
       // 保存第一次进入时的初始坐标（图片坐标系），用于重置功能
       _saveInitialImageCoordinates();
 
@@ -724,7 +752,9 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   void _resetVertices() {
     if (_initialImageRectangleFeature != null) {
       // 将保存的图片坐标转换为当前视图坐标
-      final viewVertices = _convertToViewCoordinates(_initialImageRectangleFeature!.vertices);
+      final viewVertices = _convertToViewCoordinates(
+        _initialImageRectangleFeature!.vertices,
+      );
       setRectangle(QuadAnnotation.fromVertices(viewVertices));
     } else {
       setRectangle(_getDefaultRectangle());

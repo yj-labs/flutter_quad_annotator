@@ -11,7 +11,7 @@ class SingleTouchPanGestureRecognizer extends PanGestureRecognizer {
     if (_activePointer != null) {
       return;
     }
-    
+
     _activePointer = event.pointer;
     super.addAllowedPointer(event);
   }
@@ -21,7 +21,7 @@ class SingleTouchPanGestureRecognizer extends PanGestureRecognizer {
     // 只处理活跃触摸点的事件
     if (event.pointer == _activePointer) {
       super.handleEvent(event);
-      
+
       // 如果触摸点抬起，重置活跃触摸点
       if (event is PointerUpEvent || event is PointerCancelEvent) {
         _activePointer = null;

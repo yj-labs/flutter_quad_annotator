@@ -298,7 +298,11 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: _buildImageWidget(imageSource, sourceType),
+            child: _buildAnnotatedImageWidget(
+              imageSource: imageSource,
+              sourceType: sourceType,
+              rectangleFeature: rectangleFeature,
+            ),
           ),
         ),
       ),
@@ -338,33 +342,44 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
     ];
   }
   
-  /// 构建图片组件
-  Widget _buildImageWidget(dynamic imageSource, String sourceType) {
-    switch (sourceType) {
-      case 'asset':
-        return Image.asset(
-          imageSource as String,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return const Center(
-              child: Icon(Icons.error, color: Colors.red),
-            );
-          },
+  /// 构建带标注点的图片组件
+  Widget _buildAnnotatedImageWidget({
+    required dynamic imageSource,
+    required String sourceType,
+    required QuadAnnotation rectangleFeature,
+  }) {
+    
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 根据sourceType创建对应的ImageProvider
+        ImageProvider imageProvider;
+        switch (sourceType) {
+          case 'asset':
+            imageProvider = AssetImage(imageSource as String);
+            break;
+          case 'file':
+            imageProvider = FileImage(imageSource as File);
+            break;
+          default:
+            throw ArgumentError('Unsupported source type: $sourceType');
+        }
+        
+        // 使用UniqueKey强制每次重建组件
+        return QuadAnnotatorBox.fromProvider(
+          imageProvider: imageProvider,
+          width: constraints.maxWidth,
+          height: constraints.maxHeight,
+          rectangle: rectangleFeature,
+          preview: true,
+          enableBreathing: false,
+          // 设置样式
+          vertexColor: Colors.red,
+          borderColor: Colors.blue,
+          vertexRadius: 6.0,
+          borderWidth: 2.0,
         );
-      case 'file':
-        return Image.file(
-          imageSource as File,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return const Center(
-              child: Icon(Icons.error, color: Colors.red),
-            );
-          },
-        );
-      default:
-        return const Center(
-          child: Icon(Icons.image_not_supported, color: Colors.grey),
-        );
-    }
+      },
+    );
   }
+
 }

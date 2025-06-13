@@ -74,12 +74,14 @@ typedef OnVerticesChanged = void Function(QuadAnnotation rectangle);
 /// 顶点拖动开始时的回调函数类型定义
 /// [vertexIndex] 顶点索引
 /// [position] 顶点在图片坐标系中的位置
-typedef OnVertexDragStart = void Function(int vertexIndex, Point<double> position);
+typedef OnVertexDragStart =
+    void Function(int vertexIndex, Point<double> position);
 
 /// 顶点拖动结束时的回调函数类型定义
 /// [vertexIndex] 顶点索引
 /// [position] 顶点在图片坐标系中的位置
-typedef OnVertexDragEnd = void Function(int vertexIndex, Point<double> position);
+typedef OnVertexDragEnd =
+    void Function(int vertexIndex, Point<double> position);
 
 /// 边拖动开始时的回调函数类型定义
 /// [edgeIndex] 边的索引
