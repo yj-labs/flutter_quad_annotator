@@ -7,12 +7,12 @@ issue_tracker: https://github.com/YongTaiSin/flutter_quad_annotator/issues
 
 environment:
   sdk: ^3.2.0
-  flutter: ">=3.7.0"
+  flutter: ">=3.19.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  rectangle_detector: ^1.0.2
+  rectangle_detector: ^1.0.3
 
 dev_dependencies:
   flutter_test:
