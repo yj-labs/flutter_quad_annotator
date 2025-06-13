@@ -221,7 +221,7 @@ A: 可以调整图像预处理参数，或者提供自定义的初始矩形 `ini
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/flutter_quad_annotator.git
+git clone https://github.com/YongTaiSin/flutter_quad_annotator.git
 cd flutter_quad_annotator
 
 # 安装依赖
@@ -254,8 +254,8 @@ flutter run
 
 ## 📞 联系我们
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/flutter_quad_annotator/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/flutter_quad_annotator/discussions)
+- **Issues**: [GitHub Issues](https://github.com/YongTaiSin/flutter_quad_annotator/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/YongTaiSin/flutter_quad_annotator/discussions)
 - **Email**: your.email@example.com
 
 ---
