@@ -349,9 +349,8 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
                   breathingGap: widget.breathingGap,
                   breathingStrokeWidth: widget.breathingStrokeWidth,
                   enableBreathing: widget.enableBreathing,
-                  enableMagnifier: widget.preview
-                      ? false
-                      : widget.enableMagnifier,
+                  enableMagnifier:
+                      widget.preview ? false : widget.enableMagnifier,
                   showMagnifier: _showMagnifier,
                   magnifierPosition: _magnifierPosition,
                   magnifierSourcePosition: _magnifierSourcePosition,
@@ -374,15 +373,15 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
                         gestures: {
                           SingleTouchPanGestureRecognizer:
                               GestureRecognizerFactoryWithHandlers<
-                                SingleTouchPanGestureRecognizer
-                              >(() => SingleTouchPanGestureRecognizer(), (
-                                SingleTouchPanGestureRecognizer instance,
-                              ) {
-                                instance
-                                  ..onStart = _onPanStart
-                                  ..onUpdate = _onPanUpdate
-                                  ..onEnd = _onPanEnd;
-                              }),
+                                      SingleTouchPanGestureRecognizer>(
+                                  () => SingleTouchPanGestureRecognizer(), (
+                            SingleTouchPanGestureRecognizer instance,
+                          ) {
+                            instance
+                              ..onStart = _onPanStart
+                              ..onUpdate = _onPanUpdate
+                              ..onEnd = _onPanEnd;
+                          }),
                         },
                         behavior: HitTestBehavior.opaque,
                         child: Container(
@@ -417,16 +416,15 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     );
 
     // 创建呼吸灯动画（透明度从配置的最小值到最大值循环变化）
-    _breathingAnimation =
-        Tween<double>(
-          begin: widget.breathingOpacityMin,
-          end: widget.breathingOpacityMax,
-        ).animate(
-          CurvedAnimation(
-            parent: _breathingController,
-            curve: Curves.easeInOut,
-          ),
-        );
+    _breathingAnimation = Tween<double>(
+      begin: widget.breathingOpacityMin,
+      end: widget.breathingOpacityMax,
+    ).animate(
+      CurvedAnimation(
+        parent: _breathingController,
+        curve: Curves.easeInOut,
+      ),
+    );
 
     // 根据配置决定是否启动循环动画
     if (widget.enableBreathing) {
@@ -499,7 +497,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   /// 只在第一次调用时保存，避免在didUpdate中被覆盖
   void _saveInitialImageCoordinates() {
     if (_rectangle == null) return;
-    
+
     // 只在第一次调用时保存初始坐标，避免在didUpdate中被覆盖
     if (_initialImageRectangleFeature != null) return;
 

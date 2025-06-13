@@ -2,7 +2,7 @@
 
 [![pub package](https://img.shields.io/pub/v/flutter_quad_annotator.svg)](https://pub.dev/packages/flutter_quad_annotator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Flutter](https://img.shields.io/badge/Flutter-%3E%3D1.17.0-blue.svg)](https://flutter.dev/)
+[![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.19.0-blue.svg)](https://flutter.dev/)
 [![Dart](https://img.shields.io/badge/Dart-%5E3.2.0-blue.svg)](https://dart.dev/)
 
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Web%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-blue.svg)](https://flutter.dev/)
@@ -12,7 +12,34 @@
 
 ## 📱 预览
 
-![Flutter Quad Annotator Demo](https://via.placeholder.com/600x400/f0f0f0/333333?text=Demo+Screenshot)
+### 多平台支持展示
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="doc/images/demo-android.png" width="200" alt="Android Demo"/>
+      <br/>
+      <b>Android</b>
+    </td>
+    <td align="center">
+      <img src="doc/images/demo-ios.png" width="200" alt="iOS Demo"/>
+      <br/>
+      <b>iOS</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="doc/images/demo-web.png" width="200" alt="Web Demo"/>
+      <br/>
+      <b>Web</b>
+    </td>
+    <td align="center">
+      <img src="doc/images/demo-macos.png" width="200" alt="macOS Demo"/>
+      <br/>
+      <b>macOS</b>
+    </td>
+  </tr>
+</table>
 
 *运行示例应用查看完整功能演示*
 

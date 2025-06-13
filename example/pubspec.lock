@@ -299,10 +299,10 @@ packages:
     dependency: transitive
     description:
       name: rectangle_detector
-      sha256: "1275e3c53a4950b5a14e513a5d2f8f2d35ff8b25521ee7ccec3ffd2c426e9b75"
+      sha256: "4fa33770ea0e6f5c1340eba8fd662bdd11ebc75385551210acf130e55cf1fa8e"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.3"
+    version: "1.0.4"
   sky_engine:
     dependency: transitive
     description: flutter

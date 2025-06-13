@@ -74,11 +74,11 @@ class QuadAnnotation {
   /// 转换为顶点列表
   /// 返回顺序：[左上, 右上, 右下, 左下]
   List<Point<double>> get vertices => [
-    topLeft,
-    topRight,
-    bottomRight,
-    bottomLeft,
-  ];
+        topLeft,
+        topRight,
+        bottomRight,
+        bottomLeft,
+      ];
 
   /// 转换为RectangleFeature
   RectangleFeature toRectangleFeature() {

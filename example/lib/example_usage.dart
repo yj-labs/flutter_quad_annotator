@@ -145,7 +145,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
   /// 使用静态图片
   Future<void> _useStaticImage() async {
     await _navigateToCropPage(
-      imageSource: 'assets/images/tv.jpeg',
+      imageSource: 'assets/images/book.jpeg',
       sourceType: 'asset',
     );
   }
