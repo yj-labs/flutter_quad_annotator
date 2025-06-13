@@ -496,8 +496,12 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
 
   /// 保存第一次进入时的初始坐标（图片坐标系）
   /// 将当前UI坐标转换为图片坐标系并保存，用于重置功能
+  /// 只在第一次调用时保存，避免在didUpdate中被覆盖
   void _saveInitialImageCoordinates() {
     if (_rectangle == null) return;
+    
+    // 只在第一次调用时保存初始坐标，避免在didUpdate中被覆盖
+    if (_initialImageRectangleFeature != null) return;
 
     // 使用现有的坐标转换方法将UI坐标转换为图片坐标
     final imageVertices = _convertToImageCoordinates(_rectangle!.vertices);
