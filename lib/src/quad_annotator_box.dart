@@ -262,6 +262,9 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
 
   /// 图片信息缓存
   QuadImageInfo? _cachedImageInfo;
+  
+  /// 保存第一次进入时的初始坐标（图片坐标系），用于重置功能
+  QuadAnnotation? _initialImageRectangleFeature;
 
   /// 获取图片信息（懒加载）
   /// 根据图片和容器的长宽比自动选择最佳适配方式
@@ -463,6 +466,16 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     _restoreQuadrilateralPosition(savedImageCoordinates);
   }
 
+  /// 保存第一次进入时的初始坐标（图片坐标系）
+  /// 将当前UI坐标转换为图片坐标系并保存，用于重置功能
+  void _saveInitialImageCoordinates() {
+    if (_rectangle == null) return;
+
+    // 使用现有的坐标转换方法将UI坐标转换为图片坐标
+    final imageVertices = _convertToImageCoordinates(_rectangle!.vertices);
+    _initialImageRectangleFeature = QuadAnnotation.fromVertices(imageVertices);
+  }
+
   /// 保存当前四边形在图片中的真实坐标
   /// 返回图片坐标系中的顶点列表，如果无法保存则返回null
   List<Point<double>>? _saveCurrentImageCoordinates() {
@@ -570,6 +583,9 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       }
 
       _rectangle = initialQuad ?? detectedRectangle ?? _getDefaultRectangle();
+      
+      // 保存第一次进入时的初始坐标（图片坐标系），用于重置功能
+      _saveInitialImageCoordinates();
 
       // 验证初始四边形正确性
       _rectangle?.validateQuadrilateral();
@@ -703,9 +719,16 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     _onVerticesChanged();
   }
 
-  /// 重置为默认顶点坐标（会自动应用边界限制）
+  /// 重置顶点到初始位置
+  /// 如果保存了初始坐标，则恢复到初始坐标；否则使用默认矩形
   void _resetVertices() {
-    setRectangle(_getDefaultRectangle());
+    if (_initialImageRectangleFeature != null) {
+      // 将保存的图片坐标转换为当前视图坐标
+      final viewVertices = _convertToViewCoordinates(_initialImageRectangleFeature!.vertices);
+      setRectangle(QuadAnnotation.fromVertices(viewVertices));
+    } else {
+      setRectangle(_getDefaultRectangle());
+    }
   }
 
   /// 使用 rectangle_detector 检测图片中的矩形特征点
