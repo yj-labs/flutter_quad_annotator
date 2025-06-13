@@ -30,9 +30,8 @@ class _AnnotationPageState extends State<AnnotationPage> {
   /// 当前四个顶点的坐标（图片真实坐标）
   QuadAnnotation? currentRectangle;
 
-  /// 标注组件的Key，用于获取和设置顶点坐标
-  final GlobalKey<QuadAnnotatorBoxState> _boxKey =
-      GlobalKey<QuadAnnotatorBoxState>();
+  /// 标注组件的controller，用于获取和设置顶点坐标
+  final QuadAnnotatorController _controller = QuadAnnotatorController();
   
   /// 遮罩颜色（透明表示关闭遮罩效果）
   Color _maskColor = const Color(0x80000000);
@@ -148,8 +147,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
                   },
                   dragStatus: _dragStatus,
                   currentRectangle: currentRectangle,
-                  onGetVertices: _getVertices,
-                  onGetImageVertices: _getImageVertices,
+                  onGetVertices: _getImageVertices,
                   onResetVertices: _resetVertices,
                   maxHeight: constraints.maxHeight,
                 ),
@@ -168,10 +166,10 @@ class _AnnotationPageState extends State<AnnotationPage> {
     if (widget.sourceType == 'ui_image') {
       // 直接使用 ui.Image
       return QuadAnnotatorBox(
-        key: _boxKey,
         image: widget.imageSource as ui.Image,
         width: constraints.maxWidth,
         height: constraints.maxHeight,
+        controller: _controller,
         rectangle: currentRectangle,
         onVerticesChanged: _onVerticesChanged,
         onVertexDragStart: _onVertexDragStart,
@@ -218,10 +216,10 @@ class _AnnotationPageState extends State<AnnotationPage> {
       }
       
       return QuadAnnotatorBox.fromProvider(
-        key: _boxKey,
         imageProvider: imageProvider,
         width: constraints.maxWidth,
         height: constraints.maxHeight,
+        controller: _controller,
         rectangle: currentRectangle,
         onVerticesChanged: _onVerticesChanged,
         onVertexDragStart: _onVertexDragStart,
@@ -307,40 +305,11 @@ class _AnnotationPageState extends State<AnnotationPage> {
       }
     });
   }
-
-  /// 获取当前顶点坐标（视图坐标）
-  void _getVertices() {
-    final vertices = _boxKey.currentState?.getVertices();
-    if (vertices != null) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('当前顶点坐标（视图坐标）'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: vertices.asMap().entries.map((entry) {
-              final index = entry.key;
-              final vertex = entry.value;
-              return Text(
-                '顶点${index + 1}: (${vertex.x.toStringAsFixed(2)}, ${vertex.y.toStringAsFixed(2)})',
-              );
-            }).toList(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('确定'),
-            ),
-          ],
-        ),
-      );
-    }
-  }
   
   /// 获取当前顶点的图片真实坐标
   void _getImageVertices() {
-    if (currentRectangle == null) {
+    final vertices = _controller.vertices;
+    if (vertices == null) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -356,22 +325,13 @@ class _AnnotationPageState extends State<AnnotationPage> {
       );
       return;
     }
-
-    // 现在currentRectangle已经是图片真实坐标
-    final imageVertices = [
-      currentRectangle!.topLeft,
-      currentRectangle!.topRight,
-      currentRectangle!.bottomRight,
-      currentRectangle!.bottomLeft,
-    ];
-
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('当前顶点坐标（图片真实坐标）'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: imageVertices.asMap().entries.map((entry) {
+          children: vertices.asMap().entries.map((entry) {
             final index = entry.key;
             final vertex = entry.value;
             return Padding(
@@ -432,6 +392,6 @@ class _AnnotationPageState extends State<AnnotationPage> {
 
   /// 重置顶点到默认位置
   void _resetVertices() {
-    _boxKey.currentState?.resetVertices();
+    _controller.reset();
   }
 }

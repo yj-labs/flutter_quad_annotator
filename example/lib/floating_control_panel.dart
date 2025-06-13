@@ -52,11 +52,8 @@ class FloatingControlPanel extends StatefulWidget {
   /// 当前矩形顶点坐标（图片真实坐标）
   final QuadAnnotation? currentRectangle;
   
-  /// 获取视图坐标回调
-  final VoidCallback onGetVertices;
-  
   /// 获取图片坐标回调
-  final VoidCallback onGetImageVertices;
+  final VoidCallback onGetVertices;
   
   /// 重置顶点回调
   final VoidCallback onResetVertices;
@@ -83,7 +80,6 @@ class FloatingControlPanel extends StatefulWidget {
     required this.dragStatus,
     this.currentRectangle,
     required this.onGetVertices,
-    required this.onGetImageVertices,
     required this.onResetVertices,
     required this.maxHeight,
   });
@@ -449,9 +445,8 @@ class _FloatingControlPanelState extends State<FloatingControlPanel> {
       spacing: 4,
       runSpacing: 4,
       children: [
-        _buildSmallButton('获取视图坐标', widget.onGetVertices, Colors.blue),
-        _buildSmallButton('获取图片坐标', widget.onGetImageVertices, Colors.green),
-        _buildSmallButton('重置', widget.onResetVertices, Colors.grey),
+        _buildSmallButton('获取图片坐标', widget.onGetVertices, Colors.green),
+        _buildSmallButton('重置', widget.onResetVertices, Colors.red),
       ],
     );
   }
