@@ -3,7 +3,7 @@
 [![pub package](https://img.shields.io/pub/v/flutter_quad_annotator.svg)](https://pub.dev/packages/flutter_quad_annotator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Flutter](https://img.shields.io/badge/Flutter-%3E%3D1.17.0-blue.svg)](https://flutter.dev/)
-[![Dart](https://img.shields.io/badge/Dart-%5E3.8.1-blue.svg)](https://dart.dev/)
+[![Dart](https://img.shields.io/badge/Dart-%5E3.2.0-blue.svg)](https://dart.dev/)
 
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Web%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-blue.svg)](https://flutter.dev/)
 [![Support](https://img.shields.io/badge/Support-Mobile%20%7C%20Desktop%20%7C%20Web-green.svg)](https://flutter.dev/)

@@ -256,7 +256,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   bool _isDragging = false;
 
   /// 拖动开始时的偏移量
-  Point<double> _dragStartPosition = Point(0, 0);
+  Point<double> _dragStartPosition = const Point(0, 0);
 
   /// 拖动开始时的矩形特征
   QuadAnnotation? _dragStartRectangle;
@@ -294,10 +294,10 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   bool _showMagnifier = false;
 
   /// 放大镜位置
-  Point<double> _magnifierPosition = Point(0, 0);
+  Point<double> _magnifierPosition = const Point(0, 0);
 
   /// 放大镜中心对应的原图位置
-  Point<double> _magnifierSourcePosition = Point(0, 0);
+  Point<double> _magnifierSourcePosition = const Point(0, 0);
 
   /// 异步加载的图片对象
   ui.Image? _loadedImage;
