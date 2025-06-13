@@ -41,7 +41,11 @@
   </tr>
 </table>
 
-*运行示例应用查看完整功能演示*
+### 🌐 在线演示
+
+**[点击这里体验在线演示](https://yongtaisin.github.io/flutter_quad_annotator/)**
+
+*或者运行本地示例应用查看完整功能演示*
 
 ## 功能特性
 
@@ -92,13 +96,12 @@ import 'package:flutter_quad_annotator/flutter_quad_annotator.dart';
 ```dart
 QuadAnnotatorBox(
   backgroundColor: Colors.grey[100]!,
-  onVerticesChanged: (RectangleFeature rectangle) {
+  onVerticesChanged: (QuadAnnotation rectangle) {
     print('四边形顶点已更新: ${rectangle.vertices}');
   },
-  showMagnifier: true,
-  showGrid: true,
+  enableMagnifier: true,
   vertexColor: Colors.blue,
-  edgeColor: Colors.red,
+  borderColor: Colors.red,
 )
 ```
 
@@ -128,30 +131,41 @@ flutter run
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|---------|
-| `backgroundColor` | `Color` | `Colors.white` | 背景颜色 |
-| `initialRectangle` | `RectangleFeature?` | `null` | 初始四边形 |
+| `image` | `ui.Image?` | `null` | 背景图片对象 |
+| `imageProvider` | `ImageProvider?` | `null` | 图片提供者 |
+| `width` | `double` | 必需 | 组件宽度 |
+| `height` | `double` | 必需 | 组件高度 |
+| `backgroundColor` | `Color` | `Colors.transparent` | 背景颜色 |
+| `rectangle` | `QuadAnnotation?` | `null` | 初始四边形 |
 | `onVerticesChanged` | `OnVerticesChanged?` | `null` | 顶点变化回调 |
-| `showMagnifier` | `bool` | `true` | 是否显示放大镜 |
-| `showGrid` | `bool` | `false` | 是否显示网格 |
-| `showVertices` | `bool` | `true` | 是否显示顶点 |
-| `showEdges` | `bool` | `true` | 是否显示边线 |
-| `vertexSize` | `double` | `20.0` | 顶点大小 |
-| `edgeWidth` | `double` | `2.0` | 边线宽度 |
-| `vertexColor` | `Color` | `Colors.blue` | 顶点颜色 |
-| `edgeColor` | `Color` | `Colors.red` | 边线颜色 |
+| `enableMagnifier` | `bool` | `true` | 是否启用放大镜 |
+| `vertexRadius` | `double` | `8.0` | 顶点半径 |
+| `borderWidth` | `double` | `2.0` | 边框宽度 |
+| `vertexColor` | `Color` | `Colors.white` | 顶点颜色 |
+| `borderColor` | `Color` | `Colors.white` | 边框颜色 |
+| `autoDetect` | `bool` | `true` | 是否自动检测矩形 |
+| `preview` | `bool` | `false` | 是否为预览模式 |
 
-### RectangleFeature
+### QuadAnnotation
 
-四边形特征类，用于存储和操作四个顶点坐标。
+四边形标注类，用于存储和操作四个顶点坐标。
 
 ```dart
 // 创建四边形
-final rectangle = RectangleFeature(
+final rectangle = QuadAnnotation(
   topLeft: Offset(10, 10),
   topRight: Offset(100, 10),
   bottomRight: Offset(100, 100),
   bottomLeft: Offset(10, 100),
 );
+
+// 从顶点列表创建
+final rectangle = QuadAnnotation.fromVertices([
+  Offset(10, 10),
+  Offset(100, 10),
+  Offset(100, 100),
+  Offset(10, 100),
+]);
 
 // 获取顶点列表
 List<Offset> vertices = rectangle.vertices;
@@ -166,19 +180,25 @@ Rect bounds = rectangle.bounds;
 
 ```dart
 QuadAnnotatorBox(
-  magnifierSize: 120.0,
-  magnificationScale: 2.0,
+  enableMagnifier: true,
+  magnifierRadius: 60.0,
+  magnification: 2.0,
   magnifierPositionMode: MagnifierPositionMode.edge,
+  magnifierBorderColor: Colors.white,
+  magnifierBorderWidth: 3.0,
+  magnifierCrosshairColor: Colors.white,
 )
 ```
 
-### 网格配置
+### 呼吸灯效果配置
 
 ```dart
 QuadAnnotatorBox(
-  gridSpacing: 20.0,
-  gridColor: Colors.grey.withOpacity(0.3),
-  gridWidth: 0.5,
+  enableBreathing: true,
+  breathingColor: Colors.white,
+  breathingDuration: Duration(seconds: 2),
+  breathingOpacityMin: 0.2,
+  breathingOpacityMax: 0.9,
 )
 ```
 
@@ -221,10 +241,10 @@ QuadAnnotatorBox(
 A: 确保在 `onVerticesChanged` 回调中避免执行耗时操作，可以使用防抖或节流技术。
 
 **Q: 如何禁用某些交互功能？**
-A: 使用 `preview: true` 参数可以禁用所有交互，或者单独设置 `showVertices: false` 等参数。
+A: 使用 `preview: true` 参数可以禁用所有交互功能。
 
 **Q: 自动检测不准确怎么办？**
-A: 可以调整图像预处理参数，或者提供自定义的初始矩形 `initialRectangle`。
+A: 可以设置 `autoDetect: false` 禁用自动检测，或者提供自定义的初始矩形 `rectangle`。
 
 ### 性能优化建议
 
