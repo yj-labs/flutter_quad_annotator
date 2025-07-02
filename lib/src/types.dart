@@ -8,7 +8,7 @@ extension OffsetExtension on Offset {
   Point<double> toPoint() => Point<double>(dx, dy);
 }
 
-/// Point<double> 扩展方法
+/// `Point<double>` 扩展方法
 extension PointExtension on Point<double> {
   /// 重载 + 运算符，支持 Point 与 Point 的加法
   Point<double> operator +(Point<double> other) {
