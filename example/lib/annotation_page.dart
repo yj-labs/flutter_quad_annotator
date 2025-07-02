@@ -98,80 +98,74 @@ class _AnnotationPageState extends State<AnnotationPage> {
             ),
           ],
         ),
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            return Stack(
-              children: [
-                // 四点标注组件
-                _buildQuadAnnotatorBox(constraints),
-                // 悬浮控制面板
-                FloatingControlPanel(
-                  isPanelCollapsed: _isPanelCollapsed,
-                  onPanelCollapseChanged: (value) {
-                    setState(() {
-                      _isPanelCollapsed = value;
-                    });
-                  },
-                  maskColor: _maskColor,
-                  onMaskColorChanged: (value) {
-                    setState(() {
-                      _maskColor = value;
-                    });
-                  },
-                  enableMagnifier: _enableMagnifier,
-                  onEnableMagnifierChanged: (value) {
-                    setState(() {
-                      _enableMagnifier = value;
-                    });
-                  },
-                  enableBreathing: _enableBreathing,
-                  onEnableBreathingChanged: (value) {
-                    setState(() {
-                      _enableBreathing = value;
-                    });
-                  },
-                  magnifierPositionMode: _magnifierPositionMode,
-                  onMagnifierPositionModeChanged: (value) {
-                    setState(() {
-                      _magnifierPositionMode = value;
-                    });
-                  },
-                  magnifierCornerPosition: _magnifierCornerPosition,
-                  onMagnifierCornerPositionChanged: (value) {
-                    setState(() {
-                      _magnifierCornerPosition = value;
-                    });
-                  },
-                  magnifierShape: _magnifierShape,
-                  onMagnifierShapeChanged: (value) {
-                    setState(() {
-                      _magnifierShape = value;
-                    });
-                  },
-                  dragStatus: _dragStatus,
-                  currentRectangle: currentRectangle,
-                  onGetVertices: _getImageVertices,
-                  onResetVertices: _resetVertices,
-                  maxHeight: constraints.maxHeight,
-                ),
-              ],
-            );
-          },
+        body: Stack(
+          children: [
+            // 四点标注组件
+            _buildQuadAnnotatorBox(),
+            // 悬浮控制面板
+            FloatingControlPanel(
+              isPanelCollapsed: _isPanelCollapsed,
+              onPanelCollapseChanged: (value) {
+                setState(() {
+                  _isPanelCollapsed = value;
+                });
+              },
+              maskColor: _maskColor,
+              onMaskColorChanged: (value) {
+                setState(() {
+                  _maskColor = value;
+                });
+              },
+              enableMagnifier: _enableMagnifier,
+              onEnableMagnifierChanged: (value) {
+                setState(() {
+                  _enableMagnifier = value;
+                });
+              },
+              enableBreathing: _enableBreathing,
+              onEnableBreathingChanged: (value) {
+                setState(() {
+                  _enableBreathing = value;
+                });
+              },
+              magnifierPositionMode: _magnifierPositionMode,
+              onMagnifierPositionModeChanged: (value) {
+                setState(() {
+                  _magnifierPositionMode = value;
+                });
+              },
+              magnifierCornerPosition: _magnifierCornerPosition,
+              onMagnifierCornerPositionChanged: (value) {
+                setState(() {
+                  _magnifierCornerPosition = value;
+                });
+              },
+              magnifierShape: _magnifierShape,
+              onMagnifierShapeChanged: (value) {
+                setState(() {
+                  _magnifierShape = value;
+                });
+              },
+              dragStatus: _dragStatus,
+              currentRectangle: currentRectangle,
+              onGetVertices: _getImageVertices,
+              onResetVertices: _resetVertices,
+              maxHeight: MediaQuery.of(context).size.height,
+            ),
+          ],
         ),
       ),
     );
   }
 
   /// 构建四点标注组件
-  /// [constraints] 布局约束
-  Widget _buildQuadAnnotatorBox(BoxConstraints constraints) {
+  /// 自动适应父容器尺寸
+  Widget _buildQuadAnnotatorBox() {
     // 根据图片源类型选择构造函数
     if (widget.sourceType == 'ui_image') {
       // 直接使用 ui.Image
       return QuadAnnotatorBox(
         image: widget.imageSource as ui.Image,
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
         controller: _controller,
         rectangle: currentRectangle,
         onVerticesChanged: _onVerticesChanged,
@@ -187,23 +181,27 @@ class _AnnotationPageState extends State<AnnotationPage> {
         highlightColor: Colors.yellow,
         vertexRadius: 10.0,
         borderWidth: 2.5,
-        enableBreathing: _enableBreathing,
-        breathingDuration: const Duration(milliseconds: 1500),
-        breathingOpacityMin: 0.2,
-        breathingOpacityMax: 0.9,
-        breathingGap: 0.0,
-        breathingStrokeWidth: 4.0,
-        enableMagnifier: _enableMagnifier,
-        magnifierRadius: 60.0,
-        magnification: 2.0,
-        magnifierBorderColor: Colors.blue,
-        magnifierBorderWidth: 3.0,
-        magnifierCrosshairColor: Colors.red,
-        magnifierCrosshairRadius: 0.4,
-        magnifierPositionMode: _magnifierPositionMode,
-        magnifierCornerPosition: _magnifierCornerPosition,
-        magnifierEdgeOffset: 20.0,
-        magnifierShape: _magnifierShape,
+        breathing: BreathingAnimation(
+          enabled: _enableBreathing,
+          duration: const Duration(milliseconds: 1500),
+          opacityMin: 0.2,
+          opacityMax: 0.9,
+          gap: 0.0,
+          strokeWidth: 4.0,
+        ),
+        magnifier: MagnifierConfiguration(
+          enabled: _enableMagnifier,
+          radius: 60.0,
+          magnification: 2.0,
+          borderColor: Colors.blue,
+          borderWidth: 3.0,
+          crosshairColor: Colors.red,
+          crosshairRadius: 0.4,
+          positionMode: _magnifierPositionMode,
+          cornerPosition: _magnifierCornerPosition,
+          edgeOffset: const Offset(20.0, -50.0),
+          shape: _magnifierShape,
+        ),
       );
     } else {
       // 统一使用 ImageProvider
@@ -221,8 +219,6 @@ class _AnnotationPageState extends State<AnnotationPage> {
 
       return QuadAnnotatorBox.fromProvider(
         imageProvider: imageProvider,
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
         controller: _controller,
         rectangle: currentRectangle,
         onVerticesChanged: _onVerticesChanged,
@@ -238,23 +234,27 @@ class _AnnotationPageState extends State<AnnotationPage> {
         highlightColor: Colors.yellow,
         vertexRadius: 10.0,
         borderWidth: 2.5,
-        enableBreathing: _enableBreathing,
-        breathingDuration: const Duration(milliseconds: 1500),
-        breathingOpacityMin: 0.2,
-        breathingOpacityMax: 0.9,
-        breathingGap: 0.0,
-        breathingStrokeWidth: 4.0,
-        enableMagnifier: _enableMagnifier,
-        magnifierRadius: 60.0,
-        magnification: 2.0,
-        magnifierBorderColor: Colors.blue,
-        magnifierBorderWidth: 3.0,
-        magnifierCrosshairColor: Colors.red,
-        magnifierCrosshairRadius: 0.4,
-        magnifierPositionMode: _magnifierPositionMode,
-        magnifierCornerPosition: _magnifierCornerPosition,
-        magnifierEdgeOffset: 20.0,
-        magnifierShape: _magnifierShape,
+        breathing: BreathingAnimation(
+          enabled: _enableBreathing,
+          duration: const Duration(milliseconds: 1500),
+          opacityMin: 0.2,
+          opacityMax: 0.9,
+          gap: 0.0,
+          strokeWidth: 4.0,
+        ),
+        magnifier: MagnifierConfiguration(
+          enabled: _enableMagnifier,
+          radius: 60.0,
+          magnification: 2.0,
+          borderColor: Colors.blue,
+          borderWidth: 3.0,
+          crosshairColor: Colors.red,
+          crosshairRadius: 0.4,
+          positionMode: _magnifierPositionMode,
+          cornerPosition: _magnifierCornerPosition,
+          edgeOffset: const Offset(20.0, -50.0),
+          shape: _magnifierShape,
+        ),
       );
     }
   }

@@ -52,8 +52,9 @@
 - ✅ **四边形顶点拖拽** - 支持拖拽四个顶点来调整四边形形状
 - ✅ **四边形边线拖拽** - 支持拖拽边线来移动整个四边形
 - ✅ **放大镜功能** - 拖拽时显示放大镜，便于精确定位
-- ✅ **网格辅助线** - 可选的网格背景，帮助对齐
+- ✅ **呼吸动画效果** - 可配置的呼吸灯动画，提升视觉体验
 - ✅ **高度可定制** - 支持自定义颜色、大小、样式等
+- ✅ **配置对象化** - 呼吸动画和放大镜配置抽象为独立对象
 - ✅ **事件回调** - 提供丰富的拖拽事件回调
 - ✅ **单点触控** - 智能的单点触控识别，避免多点触控干扰
 
@@ -76,7 +77,7 @@
 
 ```yaml
 dependencies:
-  flutter_quad_annotator: ^0.0.1
+  flutter_quad_annotator: ^0.1.0
 ```
 
 然后运行：
@@ -99,7 +100,16 @@ QuadAnnotatorBox(
   onVerticesChanged: (QuadAnnotation rectangle) {
     print('四边形顶点已更新: ${rectangle.vertices}');
   },
-  enableMagnifier: true,
+  breathing: const BreathingAnimation(
+    enabled: true,
+    color: Colors.white,
+    duration: Duration(seconds: 2),
+  ),
+  magnifier: const MagnifierConfiguration(
+    enabled: true,
+    radius: 60.0,
+    magnification: 2.0,
+  ),
   vertexColor: Colors.blue,
   borderColor: Colors.red,
 )
@@ -133,18 +143,20 @@ flutter run
 |------|------|--------|---------|
 | `image` | `ui.Image?` | `null` | 背景图片对象 |
 | `imageProvider` | `ImageProvider?` | `null` | 图片提供者 |
-| `width` | `double` | 必需 | 组件宽度 |
-| `height` | `double` | 必需 | 组件高度 |
+| `width` | `double?` | `null` | 组件宽度（可选，自适应） |
+| `height` | `double?` | `null` | 组件高度（可选，自适应） |
 | `backgroundColor` | `Color` | `Colors.transparent` | 背景颜色 |
 | `rectangle` | `QuadAnnotation?` | `null` | 初始四边形 |
 | `onVerticesChanged` | `OnVerticesChanged?` | `null` | 顶点变化回调 |
-| `enableMagnifier` | `bool` | `true` | 是否启用放大镜 |
+| `breathing` | `BreathingAnimation` | `BreathingAnimation()` | 呼吸动画配置 |
+| `magnifier` | `MagnifierConfiguration` | `MagnifierConfiguration()` | 放大镜配置 |
 | `vertexRadius` | `double` | `8.0` | 顶点半径 |
 | `borderWidth` | `double` | `2.0` | 边框宽度 |
 | `vertexColor` | `Color` | `Colors.white` | 顶点颜色 |
 | `borderColor` | `Color` | `Colors.white` | 边框颜色 |
 | `autoDetect` | `bool` | `true` | 是否自动检测矩形 |
 | `preview` | `bool` | `false` | 是否为预览模式 |
+| `controller` | `QuadAnnotatorController?` | `null` | 外部控制器 |
 
 ### QuadAnnotation
 
@@ -153,22 +165,22 @@ flutter run
 ```dart
 // 创建四边形
 final rectangle = QuadAnnotation(
-  topLeft: Offset(10, 10),
-  topRight: Offset(100, 10),
-  bottomRight: Offset(100, 100),
-  bottomLeft: Offset(10, 100),
+  topLeft: Point<double>(10, 10),
+  topRight: Point<double>(100, 10),
+  bottomRight: Point<double>(100, 100),
+  bottomLeft: Point<double>(10, 100),
 );
 
 // 从顶点列表创建
 final rectangle = QuadAnnotation.fromVertices([
-  Offset(10, 10),
-  Offset(100, 10),
-  Offset(100, 100),
-  Offset(10, 100),
+  Point<double>(10, 10),
+  Point<double>(100, 10),
+  Point<double>(100, 100),
+  Point<double>(10, 100),
 ]);
 
 // 获取顶点列表
-List<Offset> vertices = rectangle.vertices;
+List<Point<double>> vertices = rectangle.vertices;
 
 // 获取边界矩形
 Rect bounds = rectangle.bounds;
@@ -176,31 +188,73 @@ Rect bounds = rectangle.bounds;
 
 ## 高级配置
 
-### 放大镜配置
+### BreathingAnimation 配置
+
+呼吸动画配置类，用于控制四边形的呼吸灯效果。
 
 ```dart
 QuadAnnotatorBox(
-  enableMagnifier: true,
-  magnifierRadius: 60.0,
-  magnification: 2.0,
-  magnifierPositionMode: MagnifierPositionMode.edge,
-  magnifierBorderColor: Colors.white,
-  magnifierBorderWidth: 3.0,
-  magnifierCrosshairColor: Colors.white,
+  breathing: const BreathingAnimation(
+    enabled: true,
+    color: Colors.white,
+    duration: Duration(seconds: 2),
+    opacityMin: 0.2,
+    opacityMax: 0.9,
+    spacing: 4.0,
+    strokeWidth: 2.0,
+  ),
 )
 ```
 
-### 呼吸灯效果配置
+#### BreathingAnimation 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|---------|
+| `enabled` | `bool` | `false` | 是否启用呼吸动画 |
+| `color` | `Color` | `Colors.white` | 呼吸动画颜色 |
+| `duration` | `Duration` | `Duration(seconds: 2)` | 动画持续时间 |
+| `opacityMin` | `double` | `0.2` | 最小透明度 |
+| `opacityMax` | `double` | `0.9` | 最大透明度 |
+| `spacing` | `double` | `4.0` | 呼吸线间距 |
+| `strokeWidth` | `double` | `2.0` | 呼吸线宽度 |
+
+### MagnifierConfiguration 配置
+
+放大镜配置类，用于控制拖拽时的放大镜效果。
 
 ```dart
 QuadAnnotatorBox(
-  enableBreathing: true,
-  breathingColor: Colors.white,
-  breathingDuration: Duration(seconds: 2),
-  breathingOpacityMin: 0.2,
-  breathingOpacityMax: 0.9,
+  magnifier: const MagnifierConfiguration(
+    enabled: true,
+    radius: 60.0,
+    magnification: 2.0,
+    borderColor: Colors.white,
+    borderWidth: 3.0,
+    crosshairColor: Colors.white,
+    crosshairRadiusRatio: 0.8,
+    positionMode: MagnifierPositionMode.edge,
+    cornerPosition: MagnifierCornerPosition.topRight,
+    edgeOffset: Offset(20.0, 20.0),
+    shape: MagnifierShape.circle,
+  ),
 )
 ```
+
+#### MagnifierConfiguration 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|---------|
+| `enabled` | `bool` | `false` | 是否启用放大镜 |
+| `radius` | `double` | `60.0` | 放大镜半径 |
+| `magnification` | `double` | `2.0` | 放大倍数 |
+| `borderColor` | `Color` | `Colors.white` | 边框颜色 |
+| `borderWidth` | `double` | `3.0` | 边框宽度 |
+| `crosshairColor` | `Color` | `Colors.white` | 十字线颜色 |
+| `crosshairRadiusRatio` | `double` | `0.8` | 十字线半径比例 |
+| `positionMode` | `MagnifierPositionMode` | `MagnifierPositionMode.edge` | 位置模式 |
+| `cornerPosition` | `MagnifierCornerPosition` | `MagnifierCornerPosition.topRight` | 角落位置 |
+| `edgeOffset` | `Offset` | `Offset(20.0, 20.0)` | 二维边缘偏移向量 |
+| `shape` | `MagnifierShape` | `MagnifierShape.circle` | 放大镜形状 |
 
 ### 事件回调
 

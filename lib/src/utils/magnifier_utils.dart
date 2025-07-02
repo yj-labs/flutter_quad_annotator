@@ -11,7 +11,7 @@ class MagnifierUtils {
   /// [sourcePosition] 源位置（图片坐标系）
   /// [positionMode] 位置模式
   /// [cornerPosition] 角落位置（仅在corner模式下生效）
-  /// [edgeOffset] 边缘模式下的偏移距离
+  /// [edgeOffset] 边缘模式下放大镜的偏移距离
   /// [magnifierRadius] 放大镜半径
   /// [containerSize] 容器尺寸
   /// 返回放大镜应该显示的位置
@@ -20,7 +20,7 @@ class MagnifierUtils {
     Point<double> sourcePosition,
     MagnifierPositionMode positionMode,
     MagnifierCornerPosition cornerPosition,
-    double edgeOffset,
+    Offset edgeOffset,
     double magnifierRadius,
     Size containerSize,
   ) {
@@ -58,20 +58,22 @@ class MagnifierUtils {
   static Point<double> _getCornerPosition(
     MagnifierCornerPosition cornerPosition,
     double radius,
-    double margin,
+    Offset margin,
     Size containerSize,
   ) {
     switch (cornerPosition) {
       case MagnifierCornerPosition.topLeft:
-        return Point(radius + margin, radius + margin);
+        return Point(radius + margin.dx, radius + margin.dy);
       case MagnifierCornerPosition.topRight:
-        return Point(containerSize.width - radius - margin, radius + margin);
+        return Point(
+            containerSize.width - radius - margin.dx, radius + margin.dy);
       case MagnifierCornerPosition.bottomLeft:
-        return Point(radius + margin, containerSize.height - radius - margin);
+        return Point(
+            radius + margin.dx, containerSize.height - radius - margin.dy);
       case MagnifierCornerPosition.bottomRight:
         return Point(
-          containerSize.width - radius - margin,
-          containerSize.height - radius - margin,
+          containerSize.width - radius - margin.dx,
+          containerSize.height - radius - margin.dy,
         );
     }
   }
@@ -85,21 +87,21 @@ class MagnifierUtils {
   static Point<double> _getEdgePosition(
     Point<double> gesturePosition,
     double radius,
-    double offset,
+    Offset offset,
     Size containerSize,
   ) {
     // 计算Y坐标：让放大镜底部与手势位置齐平
-    double adjustedY = gesturePosition.y - radius;
+    double adjustedY = gesturePosition.y - radius - offset.dy;
 
     // 默认尝试在左侧显示
     Point<double> targetPosition = Point(
-      gesturePosition.x - radius - offset,
+      gesturePosition.x - radius - offset.dx,
       adjustedY,
     );
 
     // 检查是否超出左边界，如果超出则显示在右侧
     if (targetPosition.x - radius < 0) {
-      targetPosition = Point(gesturePosition.x + radius + offset, adjustedY);
+      targetPosition = Point(gesturePosition.x + radius + offset.dx, adjustedY);
     }
 
     // 检查是否超出右边界，如果超出则调整到右边界内

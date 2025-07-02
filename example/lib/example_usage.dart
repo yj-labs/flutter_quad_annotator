@@ -376,7 +376,7 @@ class _ExampleUsagePageState extends State<ExampleUsagePage> {
           height: constraints.maxHeight,
           rectangle: rectangleFeature,
           preview: true,
-          enableBreathing: false,
+          breathing: const BreathingAnimation(enabled: false),
           // 设置样式
           vertexColor: Colors.white,
           borderColor: Colors.green,

@@ -1,6 +1,6 @@
 name: flutter_quad_annotator
 description: "A Flutter package for quadrilateral annotation with draggable vertices and edges, featuring magnifier, grid assistance, and highly customizable styling options."
-version: 0.0.1
+version: 0.1.0
 homepage: https://github.com/YongTaiSin/flutter_quad_annotator
 repository: https://github.com/YongTaiSin/flutter_quad_annotator
 issue_tracker: https://github.com/YongTaiSin/flutter_quad_annotator/issues

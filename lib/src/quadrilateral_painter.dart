@@ -43,20 +43,14 @@ class QuadrilateralPainter extends CustomPainter {
   /// 外部遮罩颜色
   final Color maskColor;
 
+  /// 呼吸灯动画
+  final BreathingAnimation breathing;
+
   /// 呼吸灯动画的透明度值（0.0-1.0）
   final double breathingAnimation;
 
-  /// 呼吸灯颜色
-  final Color breathingColor;
-
-  /// 呼吸灯与顶点之间的间距
-  final double breathingGap;
-
-  /// 呼吸灯边框宽度
-  final double breathingStrokeWidth;
-
-  /// 是否启用呼吸灯动画
-  final bool enableBreathing;
+  /// 放大镜
+  final MagnifierConfiguration magnifier;
 
   /// 是否启用放大镜功能
   final bool enableMagnifier;
@@ -69,27 +63,6 @@ class QuadrilateralPainter extends CustomPainter {
 
   /// 放大镜源内容位置（要放大的区域中心点）
   final Point<double> magnifierSourcePosition;
-
-  /// 放大镜半径
-  final double magnifierRadius;
-
-  /// 放大倍数
-  final double magnification;
-
-  /// 放大镜边框颜色
-  final Color magnifierBorderColor;
-
-  /// 放大镜边框宽度
-  final double magnifierBorderWidth;
-
-  /// 放大镜准心十字线颜色
-  final Color magnifierCrosshairColor;
-
-  /// 放大镜准心十字线半径比例
-  final double magnifierCrosshairRadius;
-
-  /// 放大镜形状（圆形或方形）
-  final MagnifierShape magnifierShape;
 
   /// 要显示的图片对象
   final ui.Image image;
@@ -108,22 +81,13 @@ class QuadrilateralPainter extends CustomPainter {
     required this.vertexRadius,
     required this.borderWidth,
     required this.maskColor,
+    required this.breathing,
     required this.breathingAnimation,
-    required this.breathingColor,
-    required this.breathingGap,
-    required this.breathingStrokeWidth,
-    required this.enableBreathing,
+    required this.magnifier,
     required this.enableMagnifier,
     required this.showMagnifier,
     required this.magnifierPosition,
     required this.magnifierSourcePosition,
-    required this.magnifierRadius,
-    required this.magnification,
-    required this.magnifierBorderColor,
-    required this.magnifierBorderWidth,
-    required this.magnifierCrosshairColor,
-    required this.magnifierCrosshairRadius,
-    required this.magnifierShape,
   });
 
   @override
@@ -233,8 +197,8 @@ class QuadrilateralPainter extends CustomPainter {
 
       // 呼吸灯效果边框
       final Paint breathingBorderPaint = Paint()
-        ..color = breathingColor.withValues(alpha: breathingAnimation)
-        ..strokeWidth = breathingStrokeWidth
+        ..color = breathing.color.withValues(alpha: breathingAnimation)
+        ..strokeWidth = breathing.strokeWidth
         ..style = PaintingStyle.stroke;
 
       final Paint borderPaint = Paint()
@@ -245,12 +209,12 @@ class QuadrilateralPainter extends CustomPainter {
 
       // 计算呼吸灯圆圈半径：顶点半径 + 间距 + 边框宽度的一半
       final double breathingRadius =
-          vertexRadius + breathingGap + breathingStrokeWidth / 2;
+          vertexRadius + breathing.gap + breathing.strokeWidth / 2;
 
       // 绘制顶点圆圈
       canvas.drawCircle(vertices[i].toOffset(), vertexRadius, vertexPaint);
       // 绘制呼吸灯边框（外层）- 仅在启用呼吸灯动画时绘制
-      if (enableBreathing) {
+      if (breathing.enabled) {
         canvas.drawCircle(
           vertices[i].toOffset(),
           breathingRadius,
@@ -267,9 +231,12 @@ class QuadrilateralPainter extends CustomPainter {
     // 保存画布状态
     canvas.save();
 
+    // 半径
+    final double magnifierRadius = magnifier.radius;
+
     // 根据形状创建裁剪区域
     final Path clipPath = Path();
-    if (magnifierShape == MagnifierShape.circle) {
+    if (magnifier.shape == MagnifierShape.circle) {
       clipPath.addOval(
         Rect.fromCircle(
           center: magnifierPosition.toOffset(),
@@ -290,7 +257,7 @@ class QuadrilateralPainter extends CustomPainter {
 
     // 绘制放大的背景内容
     // 计算源区域（要放大的区域）
-    final double sourceRadius = magnifierRadius / magnification;
+    final double sourceRadius = magnifierRadius / magnifier.magnification;
     final Rect sourceRect = Rect.fromCenter(
       center: magnifierSourcePosition.toOffset(),
       width: sourceRadius * 2,
@@ -312,12 +279,12 @@ class QuadrilateralPainter extends CustomPainter {
 
     // 绘制放大镜边框
     final Paint borderPaint = Paint()
-      ..color = magnifierBorderColor
-      ..strokeWidth = magnifierBorderWidth
+      ..color = magnifier.borderColor
+      ..strokeWidth = magnifier.borderWidth
       ..style = PaintingStyle.stroke
       ..isAntiAlias = true; // 启用抗锯齿
 
-    if (magnifierShape == MagnifierShape.circle) {
+    if (magnifier.shape == MagnifierShape.circle) {
       canvas.drawCircle(
         magnifierPosition.toOffset(),
         magnifierRadius,
@@ -336,10 +303,10 @@ class QuadrilateralPainter extends CustomPainter {
 
     // 绘制准心十字线
     final Paint crosshairPaint = Paint()
-      ..color = magnifierCrosshairColor
+      ..color = magnifier.crosshairColor
       ..strokeWidth = 1.5;
 
-    final double crosshairLength = magnifierRadius * magnifierCrosshairRadius;
+    final double crosshairLength = magnifierRadius * magnifier.crosshairRadius;
 
     // 水平线
     canvas.drawLine(

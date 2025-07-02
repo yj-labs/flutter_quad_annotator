@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'quad_annotation.dart';
 
 /// Offset 扩展方法
@@ -92,6 +91,150 @@ typedef OnEdgeDragStart = void Function(int edgeIndex, Point<double> position);
 /// [edgeIndex] 边的索引
 /// [position] 拖动结束时的位置（图片坐标系）
 typedef OnEdgeDragEnd = void Function(int edgeIndex, Point<double> position);
+
+/// 呼吸动画配置类
+/// 包含呼吸灯效果的所有相关配置参数
+class BreathingAnimation {
+  /// 是否启用呼吸动画
+  final bool enabled;
+
+  /// 呼吸动画颜色
+  final Color color;
+
+  /// 呼吸动画持续时间
+  final Duration duration;
+
+  /// 呼吸动画最小透明度
+  final double opacityMin;
+
+  /// 呼吸动画最大透明度
+  final double opacityMax;
+
+  /// 呼吸动画与顶点的间距
+  final double gap;
+
+  /// 呼吸动画线条宽度
+  final double strokeWidth;
+
+  /// 创建呼吸动画配置
+  const BreathingAnimation({
+    this.enabled = true,
+    this.color = Colors.white,
+    this.duration = const Duration(seconds: 2),
+    this.opacityMin = 0.2,
+    this.opacityMax = 0.9,
+    this.gap = 2.0,
+    this.strokeWidth = 3.0,
+  });
+
+  /// 创建禁用呼吸动画的配置
+  const BreathingAnimation.disabled() : this(enabled: false);
+
+  /// 复制并修改配置
+  BreathingAnimation copyWith({
+    bool? enabled,
+    Color? color,
+    Duration? duration,
+    double? opacityMin,
+    double? opacityMax,
+    double? gap,
+    double? strokeWidth,
+  }) {
+    return BreathingAnimation(
+      enabled: enabled ?? this.enabled,
+      color: color ?? this.color,
+      duration: duration ?? this.duration,
+      opacityMin: opacityMin ?? this.opacityMin,
+      opacityMax: opacityMax ?? this.opacityMax,
+      gap: gap ?? this.gap,
+      strokeWidth: strokeWidth ?? this.strokeWidth,
+    );
+  }
+}
+
+/// 放大镜配置类
+/// 包含放大镜功能的所有相关配置参数
+class MagnifierConfiguration {
+  /// 是否启用放大镜
+  final bool enabled;
+
+  /// 放大镜半径
+  final double radius;
+
+  /// 放大倍数
+  final double magnification;
+
+  /// 放大镜边框颜色
+  final Color borderColor;
+
+  /// 放大镜边框宽度
+  final double borderWidth;
+
+  /// 放大镜十字线颜色
+  final Color crosshairColor;
+
+  /// 放大镜十字线半径比例（相对于放大镜半径）
+  final double crosshairRadius;
+
+  /// 放大镜位置模式
+  final MagnifierPositionMode positionMode;
+
+  /// 放大镜角落位置（仅在corner模式下生效）
+  final MagnifierCornerPosition cornerPosition;
+
+  /// 放大镜边缘模式下的偏移距离
+  final Offset edgeOffset;
+
+  /// 放大镜形状
+  final MagnifierShape shape;
+
+  /// 创建放大镜配置
+  const MagnifierConfiguration({
+    this.enabled = true,
+    this.radius = 60.0,
+    this.magnification = 1.0,
+    this.borderColor = Colors.white,
+    this.borderWidth = 3.0,
+    this.crosshairColor = Colors.white,
+    this.crosshairRadius = 0.3,
+    this.positionMode = MagnifierPositionMode.edge,
+    this.cornerPosition = MagnifierCornerPosition.topLeft,
+    this.edgeOffset = const Offset(20.0, 0.0),
+    this.shape = MagnifierShape.circle,
+  });
+
+  /// 创建禁用放大镜的配置
+  const MagnifierConfiguration.disabled() : this(enabled: false);
+
+  /// 复制并修改配置
+  MagnifierConfiguration copyWith({
+    bool? enabled,
+    double? radius,
+    double? magnification,
+    Color? borderColor,
+    double? borderWidth,
+    Color? crosshairColor,
+    double? crosshairRadius,
+    MagnifierPositionMode? positionMode,
+    MagnifierCornerPosition? cornerPosition,
+    Offset? edgeOffset,
+    MagnifierShape? shape,
+  }) {
+    return MagnifierConfiguration(
+      enabled: enabled ?? this.enabled,
+      radius: radius ?? this.radius,
+      magnification: magnification ?? this.magnification,
+      borderColor: borderColor ?? this.borderColor,
+      borderWidth: borderWidth ?? this.borderWidth,
+      crosshairColor: crosshairColor ?? this.crosshairColor,
+      crosshairRadius: crosshairRadius ?? this.crosshairRadius,
+      positionMode: positionMode ?? this.positionMode,
+      cornerPosition: cornerPosition ?? this.cornerPosition,
+      edgeOffset: edgeOffset ?? this.edgeOffset,
+      shape: shape ?? this.shape,
+    );
+  }
+}
 
 /// 图片信息类，包含图片的真实尺寸和显示尺寸
 class QuadImageInfo {

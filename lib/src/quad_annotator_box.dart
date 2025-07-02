@@ -42,11 +42,11 @@ class QuadAnnotatorBox extends StatefulWidget {
   /// 边拖动结束时的回调函数（传递图片坐标系中的位置）
   final OnEdgeDragEnd? onEdgeDragEnd;
 
-  /// 组件的宽度
-  final double width;
+  /// 组件的宽度（可选，如果不提供则自动适应父容器）
+  final double? width;
 
-  /// 组件的高度
-  final double height;
+  /// 组件的高度（可选，如果不提供则自动适应父容器）
+  final double? height;
 
   /// 背景色
   final Color backgroundColor;
@@ -75,59 +75,11 @@ class QuadAnnotatorBox extends StatefulWidget {
   /// 遮罩颜色（设置为透明色可关闭遮罩效果）
   final Color maskColor;
 
-  /// 呼吸灯效果颜色
-  final Color breathingColor;
+  /// 呼吸动画配置
+  final BreathingAnimation breathing;
 
-  /// 呼吸灯动画时长（秒）
-  final Duration breathingDuration;
-
-  /// 呼吸灯透明度最小值（0.0-1.0）
-  final double breathingOpacityMin;
-
-  /// 呼吸灯透明度最大值（0.0-1.0）
-  final double breathingOpacityMax;
-
-  /// 呼吸灯边框内边缘到顶点圆圈外边缘的间距
-  final double breathingGap;
-
-  /// 呼吸灯边框宽度
-  final double breathingStrokeWidth;
-
-  /// 是否启用呼吸灯动画效果
-  final bool enableBreathing;
-
-  /// 是否启用拖动时的放大镜效果
-  final bool enableMagnifier;
-
-  /// 放大镜圆圈半径
-  final double magnifierRadius;
-
-  /// 放大镜放大倍数
-  final double magnification;
-
-  /// 放大镜边框颜色
-  final Color magnifierBorderColor;
-
-  /// 放大镜边框宽度
-  final double magnifierBorderWidth;
-
-  /// 放大镜准心颜色
-  final Color magnifierCrosshairColor;
-
-  /// 放大镜准心半径（相对于放大镜半径的比例，0.0-1.0）
-  final double magnifierCrosshairRadius;
-
-  /// 放大镜位置模式
-  final MagnifierPositionMode magnifierPositionMode;
-
-  /// 放大镜角落位置（仅在corner模式下生效）
-  final MagnifierCornerPosition magnifierCornerPosition;
-
-  /// 放大镜边缘模式下的偏移距离
-  final double magnifierEdgeOffset;
-
-  /// 放大镜形状
-  final MagnifierShape magnifierShape;
+  /// 放大镜配置
+  final MagnifierConfiguration magnifier;
 
   /// 是否自动检测图片中的矩形
   /// 当为 true 时，如果没有提供初始矩形，会尝试自动检测图片中的矩形
@@ -145,8 +97,8 @@ class QuadAnnotatorBox extends StatefulWidget {
   const QuadAnnotatorBox({
     super.key,
     required this.image,
-    required this.width,
-    required this.height,
+    this.width,
+    this.height,
     this.controller,
     this.rectangle,
     this.onVerticesChanged,
@@ -163,24 +115,8 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.vertexRadius = 8.0,
     this.borderWidth = 2.0,
     this.maskColor = Colors.transparent,
-    this.breathingColor = Colors.white,
-    this.breathingDuration = const Duration(seconds: 2),
-    this.breathingOpacityMin = 0.2,
-    this.breathingOpacityMax = 0.9,
-    this.breathingGap = 2.0,
-    this.breathingStrokeWidth = 3.0,
-    this.enableBreathing = true,
-    this.enableMagnifier = true,
-    this.magnifierRadius = 60.0,
-    this.magnification = 1.0,
-    this.magnifierBorderColor = Colors.white,
-    this.magnifierBorderWidth = 3.0,
-    this.magnifierCrosshairColor = Colors.white,
-    this.magnifierCrosshairRadius = 0.3,
-    this.magnifierPositionMode = MagnifierPositionMode.edge,
-    this.magnifierCornerPosition = MagnifierCornerPosition.topLeft,
-    this.magnifierEdgeOffset = 20.0,
-    this.magnifierShape = MagnifierShape.circle,
+    this.breathing = const BreathingAnimation(),
+    this.magnifier = const MagnifierConfiguration(),
     this.autoDetect = true,
     this.preview = false,
   }) : imageProvider = null;
@@ -189,8 +125,8 @@ class QuadAnnotatorBox extends StatefulWidget {
   const QuadAnnotatorBox.fromProvider({
     super.key,
     required this.imageProvider,
-    required this.width,
-    required this.height,
+    this.width,
+    this.height,
     this.controller,
     this.rectangle,
     this.onVerticesChanged,
@@ -207,24 +143,8 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.vertexRadius = 8.0,
     this.borderWidth = 2.0,
     this.maskColor = Colors.transparent,
-    this.breathingColor = Colors.white,
-    this.breathingDuration = const Duration(seconds: 2),
-    this.breathingOpacityMin = 0.2,
-    this.breathingOpacityMax = 0.9,
-    this.breathingGap = 2.0,
-    this.breathingStrokeWidth = 3.0,
-    this.enableBreathing = true,
-    this.enableMagnifier = true,
-    this.magnifierRadius = 60.0,
-    this.magnification = 1.0,
-    this.magnifierBorderColor = Colors.white,
-    this.magnifierBorderWidth = 3.0,
-    this.magnifierCrosshairColor = Colors.white,
-    this.magnifierCrosshairRadius = 0.3,
-    this.magnifierPositionMode = MagnifierPositionMode.edge,
-    this.magnifierCornerPosition = MagnifierCornerPosition.topLeft,
-    this.magnifierEdgeOffset = 20.0,
-    this.magnifierShape = MagnifierShape.circle,
+    this.breathing = const BreathingAnimation(),
+    this.magnifier = const MagnifierConfiguration(),
     this.autoDetect = true,
     this.preview = false,
   }) : image = null;
@@ -267,14 +187,20 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   /// 保存第一次进入时的初始坐标（图片坐标系），用于重置功能
   QuadAnnotation? _initialImageRectangleFeature;
 
+  /// 获取实际使用的宽度
+  late double _actualWidth;
+
+  /// 获取实际使用的高度
+  late double _actualHeight;
+
   /// 获取图片信息（懒加载）
   /// 根据图片和容器的长宽比自动选择最佳适配方式
   /// 返回包含真实尺寸和显示信息的图片信息对象
   QuadImageInfo get _imageInfo {
     return _cachedImageInfo ??= ImageUtils.getImageInfo(
       _loadedImage!,
-      widget.width,
-      widget.height,
+      _actualWidth,
+      _actualHeight,
     );
   }
 
@@ -305,19 +231,47 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   /// 构建Widget
   @override
   Widget build(BuildContext context) {
+    // 宽高给定了确定的值
+    if (widget.width.isValid && widget.height.isValid) {
+      _actualWidth = widget.width!;
+      _actualHeight = widget.height!;
+      return _buildContent();
+    }
+    // 检查是否需要自动获取尺寸
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 根据约束设置实际尺寸
+        if (widget.width.isValid) {
+          _actualWidth = widget.width!;
+        } else {
+          _actualWidth = constraints.maxWidth;
+        }
+        if (widget.height.isValid) {
+          _actualHeight = widget.height!;
+        } else {
+          _actualHeight = constraints.maxHeight;
+        }
+        return _buildContent();
+      },
+    );
+  }
+
+  /// 构建主要内容
+  /// 根据当前的实际尺寸构建四边形标注组件的主要内容
+  Widget _buildContent() {
     // 如果图片还未加载完成 | 矩形还未初始化，显示加载占位符
     if (_loadedImage == null || _rectangle == null) {
       return Container(
-        width: widget.width,
-        height: widget.height,
+        width: double.infinity,
+        height: double.infinity,
         color: widget.backgroundColor,
         child: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Container(
-      width: widget.width,
-      height: widget.height,
+      width: _actualWidth,
+      height: _actualHeight,
       color: widget.backgroundColor,
       child: AnimatedBuilder(
         animation: _breathingAnimation,
@@ -345,24 +299,15 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
                   borderWidth: widget.borderWidth,
                   maskColor: widget.maskColor,
                   breathingAnimation: _breathingAnimation.value,
-                  breathingColor: widget.breathingColor,
-                  breathingGap: widget.breathingGap,
-                  breathingStrokeWidth: widget.breathingStrokeWidth,
-                  enableBreathing: widget.enableBreathing,
+                  breathing: widget.breathing,
+                  magnifier: widget.magnifier,
                   enableMagnifier:
-                      widget.preview ? false : widget.enableMagnifier,
+                      widget.preview ? false : widget.magnifier.enabled,
                   showMagnifier: _showMagnifier,
                   magnifierPosition: _magnifierPosition,
                   magnifierSourcePosition: _magnifierSourcePosition,
-                  magnifierRadius: widget.magnifierRadius,
-                  magnification: widget.magnification,
-                  magnifierBorderColor: widget.magnifierBorderColor,
-                  magnifierBorderWidth: widget.magnifierBorderWidth,
-                  magnifierCrosshairColor: widget.magnifierCrosshairColor,
-                  magnifierCrosshairRadius: widget.magnifierCrosshairRadius,
-                  magnifierShape: widget.magnifierShape,
                 ),
-                size: Size(widget.width, widget.height),
+                size: Size(_actualWidth, _actualHeight),
                 child: widget.preview
                     ? Container(
                         width: double.infinity,
@@ -411,14 +356,14 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
 
     // 初始化呼吸灯动画控制器
     _breathingController = AnimationController(
-      duration: widget.breathingDuration,
+      duration: widget.breathing.duration,
       vsync: this,
     );
 
     // 创建呼吸灯动画（透明度从配置的最小值到最大值循环变化）
     _breathingAnimation = Tween<double>(
-      begin: widget.breathingOpacityMin,
-      end: widget.breathingOpacityMax,
+      begin: widget.breathing.opacityMin,
+      end: widget.breathing.opacityMax,
     ).animate(
       CurvedAnimation(
         parent: _breathingController,
@@ -427,7 +372,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     );
 
     // 根据配置决定是否启动循环动画
-    if (widget.enableBreathing) {
+    if (widget.breathing.enabled) {
       _breathingController.repeat(reverse: true);
     }
 
@@ -665,11 +610,11 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     return MagnifierUtils.calculateMagnifierPosition(
       gesturePosition,
       sourcePosition,
-      widget.magnifierPositionMode,
-      widget.magnifierCornerPosition,
-      widget.magnifierEdgeOffset,
-      widget.magnifierRadius,
-      Size(widget.width, widget.height),
+      widget.magnifier.positionMode,
+      widget.magnifier.cornerPosition,
+      widget.magnifier.edgeOffset,
+      widget.magnifier.radius,
+      Size(_actualWidth, _actualHeight),
     );
   }
 
@@ -821,7 +766,7 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
           _draggedEdgeIndex = -1;
           _isDragging = true;
           // 启用放大镜效果
-          if (widget.enableMagnifier) {
+          if (widget.magnifier.enabled) {
             _showMagnifier = true;
             // 将屏幕坐标转换为图片坐标系
             _magnifierSourcePosition = _convertScreenToImageCoordinates(
@@ -912,7 +857,7 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
       _rectangle?.setVertex(_draggedVertexIndex, clampedPosition);
 
       // 更新放大镜位置
-      if (widget.enableMagnifier && _showMagnifier) {
+      if (widget.magnifier.enabled && _showMagnifier) {
         // 将屏幕坐标转换为图片坐标系
         _magnifierSourcePosition = _convertScreenToImageCoordinates(
           clampedPosition,
@@ -994,5 +939,13 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
       // 隐藏放大镜
       _showMagnifier = false;
     });
+  }
+}
+
+extension _DoubleValidation on double? {
+  /// 检查是否为确定的有限数字
+  bool get isValid {
+    final value = this;
+    return value != null && value.isFinite && !value.isNaN && value > 0;
   }
 }
