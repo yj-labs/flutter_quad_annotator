@@ -90,6 +90,10 @@ class QuadAnnotatorBox extends StatefulWidget {
   /// 当为 true 时，禁止手势操作、禁用放大镜、禁止自动检测矩形
   final bool preview;
 
+  /// 是否允许拖动边框来移动整个四边形
+  /// 当为 false 时，只能通过拖动顶点来调整四边形，不能拖动边框移动
+  final bool allowEdgeDrag;
+
   /// 控制器，用于外部控制组件状态
   final QuadAnnotatorController? controller;
 
@@ -119,6 +123,7 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.magnifier = const MagnifierConfiguration(),
     this.autoDetect = true,
     this.preview = false,
+    this.allowEdgeDrag = true,
   }) : imageProvider = null;
 
   /// 从ImageProvider创建QuadAnnotatorBox的便捷构造函数
@@ -147,6 +152,7 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.magnifier = const MagnifierConfiguration(),
     this.autoDetect = true,
     this.preview = false,
+    this.allowEdgeDrag = true,
   }) : image = null;
 
   @override
@@ -786,19 +792,21 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
       }
     }
 
-    // 检查是否点击在边上
-    for (int i = 0; i < vertices.length; i++) {
-      final nextIndex = (i + 1) % vertices.length;
-      if (_isPointNearEdge(localPosition, vertices[i], vertices[nextIndex])) {
-        _updateState(() {
-          _draggedEdgeIndex = i;
-          _draggedVertexIndex = -1;
-          _isDragging = true;
-        });
-        // 触发边拖动开始回调（传递图片坐标）
-        final imageCoordinates = _convertToImageCoordinates([localPosition]);
-        widget.onEdgeDragStart?.call(i, imageCoordinates.first);
-        return;
+    // 检查是否点击在边上（仅在允许边框拖动时）
+    if (widget.allowEdgeDrag) {
+      for (int i = 0; i < vertices.length; i++) {
+        final nextIndex = (i + 1) % vertices.length;
+        if (_isPointNearEdge(localPosition, vertices[i], vertices[nextIndex])) {
+          _updateState(() {
+            _draggedEdgeIndex = i;
+            _draggedVertexIndex = -1;
+            _isDragging = true;
+          });
+          // 触发边拖动开始回调（传递图片坐标）
+          final imageCoordinates = _convertToImageCoordinates([localPosition]);
+          widget.onEdgeDragStart?.call(i, imageCoordinates.first);
+          return;
+        }
       }
     }
 
