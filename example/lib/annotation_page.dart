@@ -181,6 +181,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
         highlightColor: Colors.yellow,
         vertexRadius: 10.0,
         borderWidth: 2.5,
+        allowEdgeDrag: false,
         breathing: BreathingAnimation(
           enabled: _enableBreathing,
           duration: const Duration(milliseconds: 1500),
@@ -192,7 +193,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
         magnifier: MagnifierConfiguration(
           enabled: _enableMagnifier,
           radius: 60.0,
-          magnification: 2.0,
+          magnification: 1.0,
           borderColor: Colors.blue,
           borderWidth: 3.0,
           crosshairColor: Colors.red,
@@ -234,6 +235,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
         highlightColor: Colors.yellow,
         vertexRadius: 10.0,
         borderWidth: 2.5,
+        allowEdgeDrag: false,
         breathing: BreathingAnimation(
           enabled: _enableBreathing,
           duration: const Duration(milliseconds: 1500),
@@ -245,7 +247,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
         magnifier: MagnifierConfiguration(
           enabled: _enableMagnifier,
           radius: 60.0,
-          magnification: 2.0,
+          magnification: 1.0,
           borderColor: Colors.blue,
           borderWidth: 3.0,
           crosshairColor: Colors.red,

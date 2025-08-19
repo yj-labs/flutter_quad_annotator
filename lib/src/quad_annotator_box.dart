@@ -94,6 +94,9 @@ class QuadAnnotatorBox extends StatefulWidget {
   /// 当为 false 时，只能通过拖动顶点来调整四边形，不能拖动边框移动
   final bool allowEdgeDrag;
 
+  /// 精调模式配置，传null则禁用精调模式
+  final FineAdjustmentConfiguration? fineAdjustment;
+
   /// 控制器，用于外部控制组件状态
   final QuadAnnotatorController? controller;
 
@@ -124,6 +127,7 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.autoDetect = true,
     this.preview = false,
     this.allowEdgeDrag = true,
+    this.fineAdjustment = const FineAdjustmentConfiguration(),
   }) : imageProvider = null;
 
   /// 从ImageProvider创建QuadAnnotatorBox的便捷构造函数
@@ -153,6 +157,7 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.autoDetect = true,
     this.preview = false,
     this.allowEdgeDrag = true,
+    this.fineAdjustment = const FineAdjustmentConfiguration(),
   }) : image = null;
 
   @override
@@ -233,6 +238,15 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
 
   /// 异步加载的图片对象
   ui.Image? _loadedImage;
+
+  /// 是否处于精调模式
+  bool _isFineAdjustmentMode = false;
+
+  /// 长按定时器
+  Timer? _longPressTimer;
+
+  /// 精调模式开始时的拖动位置
+  Point<double> _fineAdjustmentStartPosition = const Point(0, 0);
 
   /// 构建Widget
   @override
@@ -342,6 +356,30 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
                         ),
                       ),
               ),
+              // 精调模式提示
+              if (_isFineAdjustmentMode)
+                Positioned(
+                  top: 20,
+                  left: 20,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: widget.fineAdjustment?.hintBackgroundColor ?? const Color(0x88000000),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      widget.fineAdjustment?.hintText ?? '精调模式：小幅度拖动进行精确调整',
+                      style: widget.fineAdjustment?.hintTextStyle ?? const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           );
         },
@@ -395,6 +433,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   void dispose() {
     // 释放动画控制器资源
     _breathingController.dispose();
+    _longPressTimer?.cancel();
     widget.controller?.dispose();
     super.dispose();
   }
@@ -427,6 +466,13 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     // 如果组件尺寸发生变化，保持四边形的相对位置
     if (oldWidget.width != widget.width || oldWidget.height != widget.height) {
       _handleSizeChange();
+    }
+  }
+
+  /// 触发顶点变化回调
+  void _onVerticesChanged() {
+    if (_imageQuad != null) {
+      widget.onVerticesChanged?.call(_imageQuad!);
     }
   }
 
@@ -605,6 +651,40 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     }
   }
 
+  /// 使用 rectangle_detector 检测图片中的矩形特征点
+  /// 返回检测到的矩形，如果检测失败则返回 null
+  Future<QuadAnnotation?> _detectRectangleFromImage() async {
+    if (_loadedImage == null) {
+      return null;
+    }
+
+    try {
+      // 将图片转换为字节数据
+      // 使用 rawRgba 格式确保跨平台兼容性，避免 iOS 平台的 INVALID_IMAGE 错误
+      final byteData = await _loadedImage!.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+      if (byteData == null) {
+        return null;
+      }
+
+      final imageBytes = byteData.buffer.asUint8List();
+
+      // 使用 rectangle_detector 检测矩形
+      final result = await RectangleDetector.detectRectangle(imageBytes);
+
+      if (result != null) {
+        final annotation = QuadAnnotation.fromRectangleFeature(result);
+        final viewVertices = _convertToViewCoordinates(annotation.vertices);
+        return QuadAnnotation.fromVertices(viewVertices);
+      } else {
+        return null;
+      }
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// 计算放大镜位置
   /// [gesturePosition] 手势位置
   /// [sourcePosition] 源位置（图片坐标系）
@@ -717,43 +797,53 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     }
   }
 
-  /// 使用 rectangle_detector 检测图片中的矩形特征点
-  /// 返回检测到的矩形，如果检测失败则返回 null
-  Future<QuadAnnotation?> _detectRectangleFromImage() async {
-    if (_loadedImage == null) {
-      return null;
+  /// 启动长按定时器
+  void _startLongPressTimer(Point<double> position) {
+    if (widget.fineAdjustment == null) return;
+    
+    _longPressTimer?.cancel();
+    _fineAdjustmentStartPosition = position;
+    
+    _longPressTimer = Timer(widget.fineAdjustment!.longPressDuration, () {
+      // 只有在拖动顶点且手指基本没有移动的情况下才进入精调模式
+      if (_draggedVertexIndex != -1 && !_isFineAdjustmentMode) {
+        setState(() {
+          _isFineAdjustmentMode = true;
+        });
+      }
+    });
+  }
+
+  /// 取消长按定时器
+  void _cancelLongPressTimer() {
+    _longPressTimer?.cancel();
+    _longPressTimer = null;
+  }
+
+  /// 检查手指是否移动过多（超过阈值则取消精调模式触发）
+  void _checkFingerMovement(Point<double> currentPosition) {
+    if (_longPressTimer != null && !_isFineAdjustmentMode) {
+      const double movementThreshold = 10.0; // 10像素的移动阈值
+      final distance = currentPosition.distanceTo(_fineAdjustmentStartPosition);
+      
+      if (distance > movementThreshold) {
+        // 手指移动过多，取消精调模式触发
+        _cancelLongPressTimer();
+      }
     }
+  }
 
-    try {
-      // 将图片转换为字节数据
-      // 使用 rawRgba 格式确保跨平台兼容性，避免 iOS 平台的 INVALID_IMAGE 错误
-      final byteData = await _loadedImage!.toByteData(
-        format: ui.ImageByteFormat.png,
-      );
-      if (byteData == null) {
-        return null;
-      }
-
-      final imageBytes = byteData.buffer.asUint8List();
-
-      // 使用 rectangle_detector 检测矩形
-      final result = await RectangleDetector.detectRectangle(imageBytes);
-
-      if (result != null) {
-        final annotation = QuadAnnotation.fromRectangleFeature(result);
-        final viewVertices = _convertToViewCoordinates(annotation.vertices);
-        return QuadAnnotation.fromVertices(viewVertices);
-      } else {
-        return null;
-      }
-    } catch (e) {
-      return null;
+  /// 退出精调模式
+  void _exitFineAdjustmentMode() {
+    if (_isFineAdjustmentMode) {
+      setState(() {
+        _isFineAdjustmentMode = false;
+      });
     }
   }
 }
 
-/// 手势处理扩展
-/// 将手势拖动相关的回调方法统一管理，提高代码的模块化程度
+/// 扩展方法：手势处理
 extension _GestureHandlers on _QuadAnnotatorBoxState {
   /// 处理拖动开始手势
   /// [details] 拖动开始的详细信息
@@ -785,6 +875,10 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
             );
           }
         });
+        
+        // 启动长按定时器（用于精调模式）
+        _startLongPressTimer(localPosition);
+        
         // 触发顶点拖动开始回调（传递图片坐标）
         final imageCoordinates = _convertToImageCoordinates([vertices[i]]);
         widget.onVertexDragStart?.call(i, imageCoordinates.first);
@@ -824,6 +918,10 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
   /// [details] 拖动更新的详细信息
   void _onPanUpdate(DragUpdateDetails details) {
     final localPosition = details.localPosition.toPoint();
+    
+    // 检查手指移动距离，如果移动过多则取消精调模式触发
+    _checkFingerMovement(localPosition);
+    
     final delta = localPosition - _dragStartPosition;
 
     if (_draggedVertexIndex != -1) {
@@ -838,6 +936,12 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
   /// 处理拖动结束手势
   /// [details] 拖动结束的详细信息
   void _onPanEnd(DragEndDetails details) {
+    // 取消长按定时器
+    _cancelLongPressTimer();
+    
+    // 退出精调模式
+    _exitFineAdjustmentMode();
+    
     // 在拖拽结束后验证和重排四边形
     _updateState(() {
       _rectangle?.validateQuadrilateral();
@@ -860,7 +964,13 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
   void _handleVertexDrag(Point<double> localPosition, Point<double> delta) {
     _updateState(() {
       final startVertex = _dragStartRectangle!.getVertex(_draggedVertexIndex);
-      final newPosition = startVertex + delta;
+      
+      // 如果处于精调模式，应用灵敏度系数
+      final adjustedDelta = _isFineAdjustmentMode && widget.fineAdjustment != null
+          ? delta * widget.fineAdjustment!.sensitivity
+          : delta;
+      
+      final newPosition = startVertex + adjustedDelta;
       final clampedPosition = _clampToImageBounds(newPosition);
       _rectangle?.setVertex(_draggedVertexIndex, clampedPosition);
 
@@ -929,13 +1039,6 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
     // 将视图坐标转换为图片坐标
     final imageCoordinates = _convertToImageCoordinates([localPosition]);
     widget.onEdgeDragEnd?.call(_draggedEdgeIndex, imageCoordinates.first);
-  }
-
-  /// 触发顶点变化回调
-  void _onVerticesChanged() {
-    if (_imageQuad != null) {
-      widget.onVerticesChanged?.call(_imageQuad!);
-    }
   }
 
   /// 重置拖动状态

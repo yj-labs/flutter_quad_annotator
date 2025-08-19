@@ -236,6 +236,36 @@ class MagnifierConfiguration {
   }
 }
 
+/// 精调模式配置
+class FineAdjustmentConfiguration {
+  /// 长按触发精调模式的时间（毫秒）
+  final Duration longPressDuration;
+  
+  /// 精调模式下的灵敏度系数（0.1表示正常速度的1/10）
+  final double sensitivity;
+  
+  /// 精调模式提示文本
+  final String hintText;
+  
+  /// 精调模式提示文本样式
+  final TextStyle hintTextStyle;
+  
+  /// 精调模式背景色
+  final Color hintBackgroundColor;
+  
+  const FineAdjustmentConfiguration({
+    this.longPressDuration = const Duration(milliseconds: 800),
+    this.sensitivity = 0.2,
+    this.hintText = '精调模式：小幅度拖动进行精确调整',
+    this.hintTextStyle = const TextStyle(
+      color: Colors.white,
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+    ),
+    this.hintBackgroundColor = const Color(0x88000000),
+  });
+}
+
 /// 图片信息类，包含图片的真实尺寸和显示尺寸
 class QuadImageInfo {
   final Size realSize; // 图片真实尺寸
