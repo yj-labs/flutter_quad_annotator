@@ -13,11 +13,11 @@ class QuadrilateralPainter extends CustomPainter {
   /// 四边形注释对象
   final QuadAnnotation rectangle;
 
-  /// 当前被拖动的顶点索引，-1表示没有顶点被拖动
-  final int draggedVertexIndex;
-
   /// 当前被拖动的边索引，-1表示没有边被拖动
   final int draggedEdgeIndex;
+  
+  /// 当前选中的顶点索引（用于高亮显示），-1表示没有选中
+  final int selectedVertexIndex;
 
   /// 四边形边框颜色
   final Color borderColor;
@@ -71,8 +71,8 @@ class QuadrilateralPainter extends CustomPainter {
     required this.image,
     required this.vertices,
     required this.rectangle,
-    required this.draggedVertexIndex,
     required this.draggedEdgeIndex,
+    this.selectedVertexIndex = -1,
     required this.borderColor,
     required this.errorColor,
     required this.fillColor,
@@ -185,13 +185,11 @@ class QuadrilateralPainter extends CustomPainter {
   /// 绘制顶点
   void _drawVertices(Canvas canvas) {
     for (int i = 0; i < vertices.length; i++) {
-      // 如果启用放大镜且当前顶点正在被拖动，则隐藏该顶点
-      if (enableMagnifier && showMagnifier && draggedVertexIndex == i) {
-        continue;
-      }
-
+      // 确定顶点颜色：选中状态使用高亮颜色，否则使用默认颜色
+      Color currentVertexColor = selectedVertexIndex == i ? highlightColor : vertexColor;
+      
       final Paint vertexPaint = Paint()
-        ..color = draggedVertexIndex == i ? highlightColor : vertexColor
+        ..color = currentVertexColor
         ..style = PaintingStyle.fill
         ..isAntiAlias = true; // 启用抗锯齿
 
@@ -328,7 +326,7 @@ class QuadrilateralPainter extends CustomPainter {
     if (oldDelegate is! QuadrilateralPainter) return true;
 
     return rectangle != oldDelegate.rectangle ||
-        draggedVertexIndex != oldDelegate.draggedVertexIndex ||
+        selectedVertexIndex != oldDelegate.selectedVertexIndex ||
         draggedEdgeIndex != oldDelegate.draggedEdgeIndex ||
         showMagnifier != oldDelegate.showMagnifier ||
         magnifierPosition != oldDelegate.magnifierPosition ||

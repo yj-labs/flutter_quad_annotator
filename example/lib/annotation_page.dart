@@ -203,6 +203,23 @@ class _AnnotationPageState extends State<AnnotationPage> {
           edgeOffset: const Offset(20.0, -50.0),
           shape: _magnifierShape,
         ),
+        // 新增：精调模式配置，支持双击进入方向键精调模式
+        fineAdjustment: const FineAdjustmentConfiguration(
+          mode: FineAdjustmentMode.both, // 支持长按拖拽和双击方向键两种精调模式
+          longPressDuration: Duration(milliseconds: 800),
+          sensitivity: 0.3,
+          hintText: '精调模式：小幅度拖动进行精确调整',
+          dpadConfig: VirtualDPadConfiguration(
+            size: 45.0,
+            backgroundColor: Color(0xDD000000),
+            borderColor: Colors.white,
+            iconColor: Colors.white,
+            position: Alignment.bottomLeft,
+            stepSize: 1.0,
+            centerButtonSize: 55.0,
+            centerButtonColor: Color(0xCD000000),
+          ),
+        ),
       );
     } else {
       // 统一使用 ImageProvider
@@ -256,6 +273,23 @@ class _AnnotationPageState extends State<AnnotationPage> {
           cornerPosition: _magnifierCornerPosition,
           edgeOffset: const Offset(20.0, -50.0),
           shape: _magnifierShape,
+        ),
+        // 新增：精调模式配置，支持双击进入方向键精调模式
+        fineAdjustment: const FineAdjustmentConfiguration(
+          mode: FineAdjustmentMode.both, // 支持长按拖拽和双击方向键两种精调模式
+          longPressDuration: Duration(milliseconds: 800),
+          sensitivity: 0.3,
+          hintText: '精调模式：小幅度拖动进行精确调整',
+          dpadConfig: VirtualDPadConfiguration(
+            size: 65.0,
+            backgroundColor: Color(0x4D000000),
+            borderColor: Colors.white,
+            iconColor: Colors.white,
+            position: Alignment.bottomLeft,
+            stepSize: 0.5,
+            centerButtonSize: 55.0,
+            centerButtonColor: Colors.transparent,
+          ),
         ),
       );
     }

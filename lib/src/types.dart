@@ -236,6 +236,16 @@ class MagnifierConfiguration {
   }
 }
 
+/// 精调模式类型
+enum FineAdjustmentMode {
+  /// 拖动模式：长按后小幅度拖动
+  drag,
+  /// 方向键模式：显示虚拟十字方向键
+  dpad,
+  /// 两种模式都启用
+  both,
+}
+
 /// 精调模式配置
 class FineAdjustmentConfiguration {
   /// 长按触发精调模式的时间（毫秒）
@@ -253,6 +263,12 @@ class FineAdjustmentConfiguration {
   /// 精调模式背景色
   final Color hintBackgroundColor;
   
+  /// 精调模式类型
+  final FineAdjustmentMode mode;
+  
+  /// 虚拟方向键配置
+  final VirtualDPadConfiguration dpadConfig;
+  
   const FineAdjustmentConfiguration({
     this.longPressDuration = const Duration(milliseconds: 800),
     this.sensitivity = 0.2,
@@ -263,6 +279,75 @@ class FineAdjustmentConfiguration {
       fontWeight: FontWeight.w500,
     ),
     this.hintBackgroundColor = const Color(0x88000000),
+    this.mode = FineAdjustmentMode.both,
+    this.dpadConfig = const VirtualDPadConfiguration(),
+  });
+}
+
+/// 虚拟方向键配置
+class VirtualDPadConfiguration {
+  /// 方向键背景色
+  final Color backgroundColor;
+  
+  /// 方向键高亮背景色
+  final Color highlightColor;
+
+  /// 虚拟摇杆边框色
+  final Color borderColor;
+  
+  /// 虚拟摇杆边框宽度
+  final double borderWidth;
+
+  /// 方向键初始位置（相对于屏幕）
+  final Alignment position;
+
+  /// 虚拟按键外边距
+  final double margin;
+
+    /// 方向键大小
+  final double size;
+
+    /// 方向键图标色
+  final Color iconColor;
+
+  /// 方向键图标大小
+  final double iconSize;
+  
+  /// 每次点击移动的像素数
+  final double stepSize;
+  
+  /// 中心按钮大小
+  final double centerButtonSize;
+  
+  /// 中心按钮背景色
+  final Color centerButtonColor;
+  
+  /// 中心按钮文字样式
+  final TextStyle centerButtonTextStyle;
+  
+  /// 是否启用触觉反馈
+  final bool enableHapticFeedback;
+  
+  /// 构造函数
+  const VirtualDPadConfiguration({
+    this.backgroundColor = const Color(0x4D000000),
+    this.highlightColor = const Color(0x4DFFFFFF),
+    this.borderColor = Colors.white,
+    this.borderWidth = 1.0,
+    this.position = Alignment.bottomLeft,
+    this.margin = 20.0,
+    this.size = 40.0,
+    this.iconColor = Colors.white,
+    this.iconSize = 8,
+    this.stepSize = 1.0,
+    this.centerButtonSize = 50.0,
+    this.centerButtonColor = const Color(0x4D000000),
+    this.centerButtonTextStyle = const TextStyle(
+      color: Colors.white,
+      fontSize: 20,
+      fontWeight: FontWeight.w500,
+    ),
+    this.enableHapticFeedback = true,
   });
 }
 

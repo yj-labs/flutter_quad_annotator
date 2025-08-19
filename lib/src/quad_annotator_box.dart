@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:rectangle_detector/rectangle_detector.dart';
 
 import 'gesture_recognizer.dart';
@@ -14,6 +15,7 @@ import 'utils/coordinate_utils.dart';
 import 'utils/geometry_utils.dart';
 import 'utils/image_utils.dart';
 import 'utils/magnifier_utils.dart';
+import 'virtual_dpad_widget.dart';
 
 /// 四边形标注组件
 /// 支持在图片上绘制和编辑四边形区域
@@ -247,6 +249,23 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
 
   /// 精调模式开始时的拖动位置
   Point<double> _fineAdjustmentStartPosition = const Point(0, 0);
+  
+  /// 是否处于虚拟方向键精调模式
+  bool _isDPadMode = false;
+  
+  /// 当前选中的顶点索引（用于方向键模式）
+  int _selectedVertexIndex = 0;
+  
+  /// 双击检测相关
+  int _tapCount = 0;
+  Timer? _doubleTapTimer;
+  Point<double> _lastTapPosition = const Point(0, 0);
+  
+  /// 双击检测的时间窗口（毫秒）
+  static const int _doubleTapTimeWindow = 300;
+  
+  /// 双击检测的距离阈值（像素）
+  static const double _doubleTapDistanceThreshold = 20.0;
 
   /// 构建Widget
   @override
@@ -308,8 +327,8 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
                   image: _loadedImage!,
                   vertices: _rectangle!.vertices,
                   rectangle: _rectangle!,
-                  draggedVertexIndex: _draggedVertexIndex,
                   draggedEdgeIndex: _draggedEdgeIndex,
+                  selectedVertexIndex: _isDPadMode ? _selectedVertexIndex : (_isDragging ? _draggedVertexIndex : -1),
                   borderColor: widget.borderColor,
                   errorColor: widget.errorColor,
                   fillColor: widget.fillColor,
@@ -356,8 +375,8 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
                         ),
                       ),
               ),
-              // 精调模式提示
-              if (_isFineAdjustmentMode)
+              // 精调模式提示（仅在拖拽精调模式下显示）
+              if (_isFineAdjustmentMode && !_isDPadMode)
                 Positioned(
                   top: 20,
                   left: 20,
@@ -379,6 +398,30 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
                       ),
                     ),
                   ),
+                ),
+              // 点击方向键以外区域退出精调模式
+              if (_isDPadMode)
+                Positioned.fill(
+                  child: GestureDetector(
+                    onTapDown: (details) {
+                      // 点击方向键以外的区域退出精调模式
+                      _exitDPadMode();
+                    },
+                    child: Container(
+                      color: Colors.transparent,
+                    ),
+                  ),
+                ),
+              // 虚拟方向键组件
+              if (_isDPadMode && widget.fineAdjustment != null)
+                VirtualDPadWidget(
+                  config: widget.fineAdjustment!.dpadConfig,
+                  screenSize: Size(_actualWidth, _actualHeight),
+                  selectedVertexIndex: _selectedVertexIndex,
+                  totalVertices: _rectangle?.vertices.length ?? 4,
+                  onDirectionPressed: _onDPadDirectionPressed,
+                  onVertexChanged: _onDPadVertexChanged,
+                  onExit: _exitDPadMode,
                 ),
             ],
           );
@@ -434,6 +477,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     // 释放动画控制器资源
     _breathingController.dispose();
     _longPressTimer?.cancel();
+    _doubleTapTimer?.cancel();
     widget.controller?.dispose();
     super.dispose();
   }
@@ -841,6 +885,125 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       });
     }
   }
+  
+  /// 进入虚拟方向键精调模式
+  void _enterDPadMode(int vertexIndex) {
+    if (widget.fineAdjustment == null) return;
+    
+    setState(() {
+      _isDPadMode = true;
+      _selectedVertexIndex = vertexIndex;
+      // 显示放大镜
+      if (widget.magnifier.enabled && _rectangle != null) {
+        _showMagnifier = true;
+        final vertex = _rectangle!.getVertex(vertexIndex);
+        _magnifierSourcePosition = _convertScreenToImageCoordinates(vertex);
+        _magnifierPosition = _calculateMagnifierPosition(
+          vertex,
+          _magnifierSourcePosition,
+        );
+      }
+    });
+  }
+  
+  /// 退出虚拟方向键精调模式
+  void _exitDPadMode() {
+    setState(() {
+      _isDPadMode = false;
+      _showMagnifier = false;
+    });
+  }
+  
+  /// 处理虚拟方向键方向按下
+  void _onDPadDirectionPressed(double dx, double dy) {
+    if (_rectangle == null || !_isDPadMode) return;
+    
+    if (widget.fineAdjustment?.dpadConfig.enableHapticFeedback == true) {
+      // 添加震动反馈
+      HapticFeedback.lightImpact();
+    }
+    
+    final currentVertex = _rectangle!.getVertex(_selectedVertexIndex);
+    final newPosition = Point(currentVertex.x + dx, currentVertex.y + dy);
+    final clampedPosition = _clampToImageBounds(newPosition);
+    
+    setState(() {
+      _rectangle!.setVertex(_selectedVertexIndex, clampedPosition);
+      
+      // 更新放大镜位置
+      if (widget.magnifier.enabled && _showMagnifier) {
+        _magnifierSourcePosition = _convertScreenToImageCoordinates(clampedPosition);
+        _magnifierPosition = _calculateMagnifierPosition(
+          clampedPosition,
+          _magnifierSourcePosition,
+        );
+      }
+    });
+    
+    // 触发顶点变化回调
+    _onVerticesChanged();
+  }
+  
+  /// 处理虚拟方向键顶点切换
+  void _onDPadVertexChanged(int vertexIndex) {
+    if (_rectangle == null || !_isDPadMode) return;
+    
+    if (widget.fineAdjustment?.dpadConfig.enableHapticFeedback == true) {
+      // 添加震动反馈
+      HapticFeedback.selectionClick();
+    }
+    
+    setState(() {
+      _selectedVertexIndex = vertexIndex;
+      
+      // 更新放大镜位置到新选中的顶点
+      if (widget.magnifier.enabled && _showMagnifier) {
+        final vertex = _rectangle!.getVertex(vertexIndex);
+        _magnifierSourcePosition = _convertScreenToImageCoordinates(vertex);
+        _magnifierPosition = _calculateMagnifierPosition(
+          vertex,
+          _magnifierSourcePosition,
+        );
+      }
+    });
+  }
+  
+  /// 检测双击事件
+  void _handleTapForDoubleTap(Point<double> position, int vertexIndex) {
+    _tapCount++;
+    
+    if (_tapCount == 1) {
+      // 第一次点击，启动定时器
+      _doubleTapTimer?.cancel();
+      _lastTapPosition = position;
+      
+      _doubleTapTimer = Timer(const Duration(milliseconds: _doubleTapTimeWindow), () {
+        // 定时器到期，重置点击计数
+        _tapCount = 0;
+      });
+    } else if (_tapCount == 2) {
+      // 第二次点击，检查是否为有效双击
+      _doubleTapTimer?.cancel();
+      
+      final distance = position.distanceTo(_lastTapPosition);
+      if (distance <= _doubleTapDistanceThreshold) {
+        // 有效双击，进入方向键精调模式
+        _onDoubleTapVertex(vertexIndex);
+      }
+      
+      _tapCount = 0;
+    }
+  }
+  
+  /// 处理顶点双击事件
+  void _onDoubleTapVertex(int vertexIndex) {
+    if (widget.fineAdjustment == null) return;
+    
+    final mode = widget.fineAdjustment!.mode;
+    if (mode == FineAdjustmentMode.dpad || mode == FineAdjustmentMode.both) {
+      _enterDPadMode(vertexIndex);
+    }
+  }
 }
 
 /// 扩展方法：手势处理
@@ -857,12 +1020,20 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
     // 检查是否点击在顶点上
     for (int i = 0; i < vertices.length; i++) {
       if (_isPointNearVertex(localPosition, vertices[i])) {
+        // 检测双击事件（用于方向键精调模式）
+        if (widget.fineAdjustment != null) {
+          final mode = widget.fineAdjustment!.mode;
+          if (mode == FineAdjustmentMode.dpad || mode == FineAdjustmentMode.both) {
+            _handleTapForDoubleTap(localPosition, i);
+          }
+        }
+        
         _updateState(() {
           _draggedVertexIndex = i;
           _draggedEdgeIndex = -1;
           _isDragging = true;
-          // 启用放大镜效果
-          if (widget.magnifier.enabled) {
+          // 启用放大镜效果（仅在非方向键模式下）
+          if (widget.magnifier.enabled && !_isDPadMode) {
             _showMagnifier = true;
             // 将屏幕坐标转换为图片坐标系
             _magnifierSourcePosition = _convertScreenToImageCoordinates(
@@ -876,8 +1047,13 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
           }
         });
         
-        // 启动长按定时器（用于精调模式）
-        _startLongPressTimer(localPosition);
+        // 启动长按定时器（仅在拖拽精调模式下）
+        if (widget.fineAdjustment != null) {
+          final mode = widget.fineAdjustment!.mode;
+          if (mode == FineAdjustmentMode.drag || mode == FineAdjustmentMode.both) {
+            _startLongPressTimer(localPosition);
+          }
+        }
         
         // 触发顶点拖动开始回调（传递图片坐标）
         final imageCoordinates = _convertToImageCoordinates([vertices[i]]);
@@ -939,8 +1115,10 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
     // 取消长按定时器
     _cancelLongPressTimer();
     
-    // 退出精调模式
-    _exitFineAdjustmentMode();
+    // 退出拖拽精调模式（但不退出方向键精调模式）
+    if (!_isDPadMode) {
+      _exitFineAdjustmentMode();
+    }
     
     // 在拖拽结束后验证和重排四边形
     _updateState(() {
@@ -954,7 +1132,7 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
       _handleEdgeDragEnd(details.localPosition.toPoint());
     }
 
-    // 重置拖动状态
+    // 重置拖动状态（但在方向键模式下保持放大镜显示）
     _resetDragState();
   }
 
@@ -1047,8 +1225,10 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
       _draggedVertexIndex = -1;
       _draggedEdgeIndex = -1;
       _isDragging = false;
-      // 隐藏放大镜
-      _showMagnifier = false;
+      // 隐藏放大镜（除非在方向键模式下）
+      if (!_isDPadMode) {
+        _showMagnifier = false;
+      }
     });
   }
 }
