@@ -249,21 +249,21 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
 
   /// 精调模式开始时的拖动位置
   Point<double> _fineAdjustmentStartPosition = const Point(0, 0);
-  
+
   /// 是否处于虚拟方向键精调模式
   bool _isDPadMode = false;
-  
+
   /// 当前选中的顶点索引（用于方向键模式）
   int _selectedVertexIndex = 0;
-  
+
   /// 双击检测相关
   int _tapCount = 0;
   Timer? _doubleTapTimer;
   Point<double> _lastTapPosition = const Point(0, 0);
-  
+
   /// 双击检测的时间窗口（毫秒）
   static const int _doubleTapTimeWindow = 300;
-  
+
   /// 双击检测的距离阈值（像素）
   static const double _doubleTapDistanceThreshold = 20.0;
 
@@ -328,7 +328,9 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
                   vertices: _rectangle!.vertices,
                   rectangle: _rectangle!,
                   draggedEdgeIndex: _draggedEdgeIndex,
-                  selectedVertexIndex: _isDPadMode ? _selectedVertexIndex : (_isDragging ? _draggedVertexIndex : -1),
+                  selectedVertexIndex: _isDPadMode
+                      ? _selectedVertexIndex
+                      : (_isDragging ? _draggedVertexIndex : -1),
                   borderColor: widget.borderColor,
                   errorColor: widget.errorColor,
                   fillColor: widget.fillColor,
@@ -386,16 +388,18 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: widget.fineAdjustment?.hintBackgroundColor ?? const Color(0x88000000),
+                      color: widget.fineAdjustment?.hintBackgroundColor ??
+                          const Color(0x88000000),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       widget.fineAdjustment?.hintText ?? '精调模式：小幅度拖动进行精确调整',
-                      style: widget.fineAdjustment?.hintTextStyle ?? const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: widget.fineAdjustment?.hintTextStyle ??
+                          const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                     ),
                   ),
                 ),
@@ -844,10 +848,10 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   /// 启动长按定时器
   void _startLongPressTimer(Point<double> position) {
     if (widget.fineAdjustment == null) return;
-    
+
     _longPressTimer?.cancel();
     _fineAdjustmentStartPosition = position;
-    
+
     _longPressTimer = Timer(widget.fineAdjustment!.longPressDuration, () {
       // 只有在拖动顶点且手指基本没有移动的情况下才进入精调模式
       if (_draggedVertexIndex != -1 && !_isFineAdjustmentMode) {
@@ -869,7 +873,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     if (_longPressTimer != null && !_isFineAdjustmentMode) {
       const double movementThreshold = 10.0; // 10像素的移动阈值
       final distance = currentPosition.distanceTo(_fineAdjustmentStartPosition);
-      
+
       if (distance > movementThreshold) {
         // 手指移动过多，取消精调模式触发
         _cancelLongPressTimer();
@@ -885,11 +889,11 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       });
     }
   }
-  
+
   /// 进入虚拟方向键精调模式
   void _enterDPadMode(int vertexIndex) {
     if (widget.fineAdjustment == null) return;
-    
+
     setState(() {
       _isDPadMode = true;
       _selectedVertexIndex = vertexIndex;
@@ -905,7 +909,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       }
     });
   }
-  
+
   /// 退出虚拟方向键精调模式
   void _exitDPadMode() {
     setState(() {
@@ -913,49 +917,50 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       _showMagnifier = false;
     });
   }
-  
+
   /// 处理虚拟方向键方向按下
   void _onDPadDirectionPressed(double dx, double dy) {
     if (_rectangle == null || !_isDPadMode) return;
-    
+
     if (widget.fineAdjustment?.dpadConfig.enableHapticFeedback == true) {
       // 添加震动反馈
       HapticFeedback.lightImpact();
     }
-    
+
     final currentVertex = _rectangle!.getVertex(_selectedVertexIndex);
     final newPosition = Point(currentVertex.x + dx, currentVertex.y + dy);
     final clampedPosition = _clampToImageBounds(newPosition);
-    
+
     setState(() {
       _rectangle!.setVertex(_selectedVertexIndex, clampedPosition);
-      
+
       // 更新放大镜位置
       if (widget.magnifier.enabled && _showMagnifier) {
-        _magnifierSourcePosition = _convertScreenToImageCoordinates(clampedPosition);
+        _magnifierSourcePosition =
+            _convertScreenToImageCoordinates(clampedPosition);
         _magnifierPosition = _calculateMagnifierPosition(
           clampedPosition,
           _magnifierSourcePosition,
         );
       }
     });
-    
+
     // 触发顶点变化回调
     _onVerticesChanged();
   }
-  
+
   /// 处理虚拟方向键顶点切换
   void _onDPadVertexChanged(int vertexIndex) {
     if (_rectangle == null || !_isDPadMode) return;
-    
+
     if (widget.fineAdjustment?.dpadConfig.enableHapticFeedback == true) {
       // 添加震动反馈
       HapticFeedback.selectionClick();
     }
-    
+
     setState(() {
       _selectedVertexIndex = vertexIndex;
-      
+
       // 更新放大镜位置到新选中的顶点
       if (widget.magnifier.enabled && _showMagnifier) {
         final vertex = _rectangle!.getVertex(vertexIndex);
@@ -967,38 +972,39 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       }
     });
   }
-  
+
   /// 检测双击事件
   void _handleTapForDoubleTap(Point<double> position, int vertexIndex) {
     _tapCount++;
-    
+
     if (_tapCount == 1) {
       // 第一次点击，启动定时器
       _doubleTapTimer?.cancel();
       _lastTapPosition = position;
-      
-      _doubleTapTimer = Timer(const Duration(milliseconds: _doubleTapTimeWindow), () {
+
+      _doubleTapTimer =
+          Timer(const Duration(milliseconds: _doubleTapTimeWindow), () {
         // 定时器到期，重置点击计数
         _tapCount = 0;
       });
     } else if (_tapCount == 2) {
       // 第二次点击，检查是否为有效双击
       _doubleTapTimer?.cancel();
-      
+
       final distance = position.distanceTo(_lastTapPosition);
       if (distance <= _doubleTapDistanceThreshold) {
         // 有效双击，进入方向键精调模式
         _onDoubleTapVertex(vertexIndex);
       }
-      
+
       _tapCount = 0;
     }
   }
-  
+
   /// 处理顶点双击事件
   void _onDoubleTapVertex(int vertexIndex) {
     if (widget.fineAdjustment == null) return;
-    
+
     final mode = widget.fineAdjustment!.mode;
     if (mode == FineAdjustmentMode.dpad || mode == FineAdjustmentMode.both) {
       _enterDPadMode(vertexIndex);
@@ -1023,11 +1029,12 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
         // 检测双击事件（用于方向键精调模式）
         if (widget.fineAdjustment != null) {
           final mode = widget.fineAdjustment!.mode;
-          if (mode == FineAdjustmentMode.dpad || mode == FineAdjustmentMode.both) {
+          if (mode == FineAdjustmentMode.dpad ||
+              mode == FineAdjustmentMode.both) {
             _handleTapForDoubleTap(localPosition, i);
           }
         }
-        
+
         _updateState(() {
           _draggedVertexIndex = i;
           _draggedEdgeIndex = -1;
@@ -1046,15 +1053,16 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
             );
           }
         });
-        
+
         // 启动长按定时器（仅在拖拽精调模式下）
         if (widget.fineAdjustment != null) {
           final mode = widget.fineAdjustment!.mode;
-          if (mode == FineAdjustmentMode.drag || mode == FineAdjustmentMode.both) {
+          if (mode == FineAdjustmentMode.drag ||
+              mode == FineAdjustmentMode.both) {
             _startLongPressTimer(localPosition);
           }
         }
-        
+
         // 触发顶点拖动开始回调（传递图片坐标）
         final imageCoordinates = _convertToImageCoordinates([vertices[i]]);
         widget.onVertexDragStart?.call(i, imageCoordinates.first);
@@ -1094,10 +1102,10 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
   /// [details] 拖动更新的详细信息
   void _onPanUpdate(DragUpdateDetails details) {
     final localPosition = details.localPosition.toPoint();
-    
+
     // 检查手指移动距离，如果移动过多则取消精调模式触发
     _checkFingerMovement(localPosition);
-    
+
     final delta = localPosition - _dragStartPosition;
 
     if (_draggedVertexIndex != -1) {
@@ -1114,12 +1122,12 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
   void _onPanEnd(DragEndDetails details) {
     // 取消长按定时器
     _cancelLongPressTimer();
-    
+
     // 退出拖拽精调模式（但不退出方向键精调模式）
     if (!_isDPadMode) {
       _exitFineAdjustmentMode();
     }
-    
+
     // 在拖拽结束后验证和重排四边形
     _updateState(() {
       _rectangle?.validateQuadrilateral();
@@ -1142,12 +1150,13 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
   void _handleVertexDrag(Point<double> localPosition, Point<double> delta) {
     _updateState(() {
       final startVertex = _dragStartRectangle!.getVertex(_draggedVertexIndex);
-      
+
       // 如果处于精调模式，应用灵敏度系数
-      final adjustedDelta = _isFineAdjustmentMode && widget.fineAdjustment != null
-          ? delta * widget.fineAdjustment!.sensitivity
-          : delta;
-      
+      final adjustedDelta =
+          _isFineAdjustmentMode && widget.fineAdjustment != null
+              ? delta * widget.fineAdjustment!.sensitivity
+              : delta;
+
       final newPosition = startVertex + adjustedDelta;
       final clampedPosition = _clampToImageBounds(newPosition);
       _rectangle?.setVertex(_draggedVertexIndex, clampedPosition);

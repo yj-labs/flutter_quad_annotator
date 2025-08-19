@@ -15,7 +15,7 @@ class QuadrilateralPainter extends CustomPainter {
 
   /// 当前被拖动的边索引，-1表示没有边被拖动
   final int draggedEdgeIndex;
-  
+
   /// 当前选中的顶点索引（用于高亮显示），-1表示没有选中
   final int selectedVertexIndex;
 
@@ -186,8 +186,9 @@ class QuadrilateralPainter extends CustomPainter {
   void _drawVertices(Canvas canvas) {
     for (int i = 0; i < vertices.length; i++) {
       // 确定顶点颜色：选中状态使用高亮颜色，否则使用默认颜色
-      Color currentVertexColor = selectedVertexIndex == i ? highlightColor : vertexColor;
-      
+      Color currentVertexColor =
+          selectedVertexIndex == i ? highlightColor : vertexColor;
+
       final Paint vertexPaint = Paint()
         ..color = currentVertexColor
         ..style = PaintingStyle.fill

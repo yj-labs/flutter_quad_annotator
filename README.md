@@ -8,7 +8,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Web%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-blue.svg)](https://flutter.dev/)
 [![Support](https://img.shields.io/badge/Support-Mobile%20%7C%20Desktop%20%7C%20Web-green.svg)](https://flutter.dev/)
 
-一个功能强大的Flutter四边形标注工具包，提供可拖拽的四点定位四边形组件，支持放大镜、网格辅助线、自动检测等丰富功能。
+一个功能强大的 Flutter 四边形标注工具包，提供可拖拽的四点定位四边形组件，支持放大镜、精细调整、自动检测等丰富功能。
 
 ## 📱 预览
 
@@ -45,29 +45,34 @@
 
 **[点击这里体验在线演示](https://yongtaisin.github.io/flutter_quad_annotator/)**
 
-*或者运行本地示例应用查看完整功能演示*
+_或者运行本地示例应用查看完整功能演示_
+
+## 功能特性
 
 ## 功能特性
 
 - ✅ **四边形顶点拖拽** - 支持拖拽四个顶点来调整四边形形状
 - ✅ **四边形边线拖拽** - 支持拖拽边线来移动整个四边形
 - ✅ **放大镜功能** - 拖拽时显示放大镜，便于精确定位
+- ✅ **精调模式** - 长按或双击顶点进入精调模式，支持像素级精确调整
+- ✅ **虚拟方向键** - 精调模式下显示虚拟方向键，支持上下左右精确移动
+- ✅ **顶点切换** - 精调模式下可快速切换不同顶点进行调整
 - ✅ **呼吸动画效果** - 可配置的呼吸灯动画，提升视觉体验
 - ✅ **高度可定制** - 支持自定义颜色、大小、样式等
-- ✅ **配置对象化** - 呼吸动画和放大镜配置抽象为独立对象
+- ✅ **配置对象化** - 呼吸动画、放大镜和精调模式配置抽象为独立对象
 - ✅ **事件回调** - 提供丰富的拖拽事件回调
 - ✅ **单点触控** - 智能的单点触控识别，避免多点触控干扰
 
 ## 📋 平台支持
 
-| 平台 | 支持状态 | 备注 |
-|------|----------|------|
-| ✅ Android | 完全支持 | API 16+ |
-| ✅ iOS | 完全支持 | iOS 9.0+ |
-| ✅ Web | 完全支持 | 现代浏览器 |
-| ✅ macOS | 完全支持 | macOS 10.11+ |
-| ✅ Windows | 完全支持 | Windows 7+ |
-| ✅ Linux | 完全支持 | 主流发行版 |
+| 平台       | 支持状态 | 备注         |
+| ---------- | -------- | ------------ |
+| ✅ Android | 完全支持 | API 16+      |
+| ✅ iOS     | 完全支持 | iOS 9.0+     |
+| ✅ Web     | 完全支持 | 现代浏览器   |
+| ✅ macOS   | 完全支持 | macOS 10.11+ |
+| ✅ Windows | 完全支持 | Windows 7+   |
+| ✅ Linux   | 完全支持 | 主流发行版   |
 
 ## 快速开始
 
@@ -75,10 +80,11 @@
 
 在你的 `pubspec.yaml` 文件中添加依赖：
 
+````yaml
 ```yaml
 dependencies:
-  flutter_quad_annotator: ^0.1.0
-```
+  flutter_quad_annotator: ^0.2.0
+````
 
 然后运行：
 
@@ -91,6 +97,8 @@ flutter pub get
 ```dart
 import 'package:flutter_quad_annotator/flutter_quad_annotator.dart';
 ```
+
+## 基本用法
 
 ## 基本用法
 
@@ -110,6 +118,15 @@ QuadAnnotatorBox(
     radius: 60.0,
     magnification: 2.0,
   ),
+  fineAdjustment: const FineAdjustmentConfiguration(
+    mode: FineAdjustmentMode.both, // 支持长按和双击
+    dpadConfig: VirtualDPadConfiguration(
+      enabled: true,
+      size: 40.0,
+      stepSize: 1.0,
+      position: Alignment.bottomRight,
+    ),
+  ),
   vertexColor: Colors.blue,
   borderColor: Colors.red,
 )
@@ -126,6 +143,7 @@ flutter run
 ```
 
 示例应用包含：
+
 - 交互式控制面板
 - 实时坐标显示
 - 所有配置选项的演示
@@ -139,24 +157,24 @@ flutter run
 
 #### 主要参数
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|---------|
-| `image` | `ui.Image?` | `null` | 背景图片对象 |
-| `imageProvider` | `ImageProvider?` | `null` | 图片提供者 |
-| `width` | `double?` | `null` | 组件宽度（可选，自适应） |
-| `height` | `double?` | `null` | 组件高度（可选，自适应） |
-| `backgroundColor` | `Color` | `Colors.transparent` | 背景颜色 |
-| `rectangle` | `QuadAnnotation?` | `null` | 初始四边形 |
-| `onVerticesChanged` | `OnVerticesChanged?` | `null` | 顶点变化回调 |
-| `breathing` | `BreathingAnimation` | `BreathingAnimation()` | 呼吸动画配置 |
-| `magnifier` | `MagnifierConfiguration` | `MagnifierConfiguration()` | 放大镜配置 |
-| `vertexRadius` | `double` | `8.0` | 顶点半径 |
-| `borderWidth` | `double` | `2.0` | 边框宽度 |
-| `vertexColor` | `Color` | `Colors.white` | 顶点颜色 |
-| `borderColor` | `Color` | `Colors.white` | 边框颜色 |
-| `autoDetect` | `bool` | `true` | 是否自动检测矩形 |
-| `preview` | `bool` | `false` | 是否为预览模式 |
-| `controller` | `QuadAnnotatorController?` | `null` | 外部控制器 |
+| 参数                | 类型                       | 默认值                     | 说明                     |
+| ------------------- | -------------------------- | -------------------------- | ------------------------ |
+| `image`             | `ui.Image?`                | `null`                     | 背景图片对象             |
+| `imageProvider`     | `ImageProvider?`           | `null`                     | 图片提供者               |
+| `width`             | `double?`                  | `null`                     | 组件宽度（可选，自适应） |
+| `height`            | `double?`                  | `null`                     | 组件高度（可选，自适应） |
+| `backgroundColor`   | `Color`                    | `Colors.transparent`       | 背景颜色                 |
+| `rectangle`         | `QuadAnnotation?`          | `null`                     | 初始四边形               |
+| `onVerticesChanged` | `OnVerticesChanged?`       | `null`                     | 顶点变化回调             |
+| `breathing`         | `BreathingAnimation`       | `BreathingAnimation()`     | 呼吸动画配置             |
+| `magnifier`         | `MagnifierConfiguration`   | `MagnifierConfiguration()` | 放大镜配置               |
+| `vertexRadius`      | `double`                   | `8.0`                      | 顶点半径                 |
+| `borderWidth`       | `double`                   | `2.0`                      | 边框宽度                 |
+| `vertexColor`       | `Color`                    | `Colors.white`             | 顶点颜色                 |
+| `borderColor`       | `Color`                    | `Colors.white`             | 边框颜色                 |
+| `autoDetect`        | `bool`                     | `true`                     | 是否自动检测矩形         |
+| `preview`           | `bool`                     | `false`                    | 是否为预览模式           |
+| `controller`        | `QuadAnnotatorController?` | `null`                     | 外部控制器               |
 
 ### QuadAnnotation
 
@@ -208,15 +226,15 @@ QuadAnnotatorBox(
 
 #### BreathingAnimation 参数
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|---------|
-| `enabled` | `bool` | `false` | 是否启用呼吸动画 |
-| `color` | `Color` | `Colors.white` | 呼吸动画颜色 |
-| `duration` | `Duration` | `Duration(seconds: 2)` | 动画持续时间 |
-| `opacityMin` | `double` | `0.2` | 最小透明度 |
-| `opacityMax` | `double` | `0.9` | 最大透明度 |
-| `spacing` | `double` | `4.0` | 呼吸线间距 |
-| `strokeWidth` | `double` | `2.0` | 呼吸线宽度 |
+| 参数          | 类型       | 默认值                 | 说明             |
+| ------------- | ---------- | ---------------------- | ---------------- |
+| `enabled`     | `bool`     | `false`                | 是否启用呼吸动画 |
+| `color`       | `Color`    | `Colors.white`         | 呼吸动画颜色     |
+| `duration`    | `Duration` | `Duration(seconds: 2)` | 动画持续时间     |
+| `opacityMin`  | `double`   | `0.2`                  | 最小透明度       |
+| `opacityMax`  | `double`   | `0.9`                  | 最大透明度       |
+| `spacing`     | `double`   | `4.0`                  | 呼吸线间距       |
+| `strokeWidth` | `double`   | `2.0`                  | 呼吸线宽度       |
 
 ### MagnifierConfiguration 配置
 
@@ -242,19 +260,75 @@ QuadAnnotatorBox(
 
 #### MagnifierConfiguration 参数
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|---------|
-| `enabled` | `bool` | `false` | 是否启用放大镜 |
-| `radius` | `double` | `60.0` | 放大镜半径 |
-| `magnification` | `double` | `2.0` | 放大倍数 |
-| `borderColor` | `Color` | `Colors.white` | 边框颜色 |
-| `borderWidth` | `double` | `3.0` | 边框宽度 |
-| `crosshairColor` | `Color` | `Colors.white` | 十字线颜色 |
-| `crosshairRadiusRatio` | `double` | `0.8` | 十字线半径比例 |
-| `positionMode` | `MagnifierPositionMode` | `MagnifierPositionMode.edge` | 位置模式 |
-| `cornerPosition` | `MagnifierCornerPosition` | `MagnifierCornerPosition.topRight` | 角落位置 |
-| `edgeOffset` | `Offset` | `Offset(20.0, 20.0)` | 二维边缘偏移向量 |
-| `shape` | `MagnifierShape` | `MagnifierShape.circle` | 放大镜形状 |
+| 参数                   | 类型                      | 默认值                             | 说明             |
+| ---------------------- | ------------------------- | ---------------------------------- | ---------------- |
+| `enabled`              | `bool`                    | `false`                            | 是否启用放大镜   |
+| `radius`               | `double`                  | `60.0`                             | 放大镜半径       |
+| `magnification`        | `double`                  | `2.0`                              | 放大倍数         |
+| `borderColor`          | `Color`                   | `Colors.white`                     | 边框颜色         |
+| `borderWidth`          | `double`                  | `3.0`                              | 边框宽度         |
+| `crosshairColor`       | `Color`                   | `Colors.white`                     | 十字线颜色       |
+| `crosshairRadiusRatio` | `double`                  | `0.8`                              | 十字线半径比例   |
+| `positionMode`         | `MagnifierPositionMode`   | `MagnifierPositionMode.edge`       | 位置模式         |
+| `cornerPosition`       | `MagnifierCornerPosition` | `MagnifierCornerPosition.topRight` | 角落位置         |
+| `edgeOffset`           | `Offset`                  | `Offset(20.0, 20.0)`               | 二维边缘偏移向量 |
+| `shape`                | `MagnifierShape`          | `MagnifierShape.circle`            | 放大镜形状       |
+
+### FineAdjustmentConfiguration 配置
+
+精调模式配置类，用于控制精调模式的行为和虚拟方向键。
+
+```dart
+QuadAnnotatorBox(
+  fineAdjustment: const FineAdjustmentConfiguration(
+    mode: FineAdjustmentMode.both, // 支持长按和双击
+    longPressDuration: Duration(milliseconds: 500),
+    dpadConfig: VirtualDPadConfiguration(
+      enabled: true,
+      size: 40.0,
+      stepSize: 1.0,
+      spacing: 8.0,
+      position: Alignment.bottomRight,
+      backgroundColor: Colors.black54,
+      borderColor: Colors.white,
+      iconColor: Colors.white,
+      opacity: 0.8,
+      borderRadius: 8.0,
+      borderWidth: 1.0,
+    ),
+  ),
+)
+```
+
+#### FineAdjustmentConfiguration 参数
+
+| 参数                | 类型                       | 默认值                         | 说明             |
+| ------------------- | -------------------------- | ------------------------------ | ---------------- |
+| `mode`              | `FineAdjustmentMode`       | `FineAdjustmentMode.longPress` | 精调模式触发方式 |
+| `longPressDuration` | `Duration`                 | `Duration(milliseconds: 500)`  | 长按触发时长     |
+| `dpadConfig`        | `VirtualDPadConfiguration` | `VirtualDPadConfiguration()`   | 虚拟方向键配置   |
+
+#### VirtualDPadConfiguration 参数
+
+| 参数              | 类型        | 默认值                  | 说明               |
+| ----------------- | ----------- | ----------------------- | ------------------ |
+| `enabled`         | `bool`      | `true`                  | 是否启用虚拟方向键 |
+| `size`            | `double`    | `40.0`                  | 方向键按钮大小     |
+| `stepSize`        | `double`    | `1.0`                   | 每次移动的像素步长 |
+| `spacing`         | `double`    | `8.0`                   | 按钮间距           |
+| `position`        | `Alignment` | `Alignment.bottomRight` | 方向键面板位置     |
+| `backgroundColor` | `Color`     | `Colors.black54`        | 背景颜色           |
+| `borderColor`     | `Color`     | `Colors.white`          | 边框颜色           |
+| `iconColor`       | `Color`     | `Colors.white`          | 图标颜色           |
+| `opacity`         | `double`    | `0.8`                   | 透明度             |
+| `borderRadius`    | `double`    | `8.0`                   | 圆角半径           |
+| `borderWidth`     | `double`    | `1.0`                   | 边框宽度           |
+
+#### FineAdjustmentMode 枚举
+
+- `FineAdjustmentMode.longPress` - 仅支持长按进入精调模式
+- `FineAdjustmentMode.doubleTap` - 仅支持双击进入精调模式
+- `FineAdjustmentMode.both` - 同时支持长按和双击进入精调模式
 
 ### 事件回调
 
@@ -284,8 +358,6 @@ QuadAnnotatorBox(
 - **内存优化**: 智能的状态管理，避免不必要的重建
 - **流畅交互**: 60fps 的拖拽体验，支持高刷新率设备
 - **响应式设计**: 自适应不同屏幕尺寸和像素密度
-
-
 
 ## 🔧 故障排除
 

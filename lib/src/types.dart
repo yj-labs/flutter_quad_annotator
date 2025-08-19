@@ -240,8 +240,10 @@ class MagnifierConfiguration {
 enum FineAdjustmentMode {
   /// 拖动模式：长按后小幅度拖动
   drag,
+
   /// 方向键模式：显示虚拟十字方向键
   dpad,
+
   /// 两种模式都启用
   both,
 }
@@ -250,25 +252,25 @@ enum FineAdjustmentMode {
 class FineAdjustmentConfiguration {
   /// 长按触发精调模式的时间（毫秒）
   final Duration longPressDuration;
-  
+
   /// 精调模式下的灵敏度系数（0.1表示正常速度的1/10）
   final double sensitivity;
-  
+
   /// 精调模式提示文本
   final String hintText;
-  
+
   /// 精调模式提示文本样式
   final TextStyle hintTextStyle;
-  
+
   /// 精调模式背景色
   final Color hintBackgroundColor;
-  
+
   /// 精调模式类型
   final FineAdjustmentMode mode;
-  
+
   /// 虚拟方向键配置
   final VirtualDPadConfiguration dpadConfig;
-  
+
   const FineAdjustmentConfiguration({
     this.longPressDuration = const Duration(milliseconds: 800),
     this.sensitivity = 0.2,
@@ -288,13 +290,13 @@ class FineAdjustmentConfiguration {
 class VirtualDPadConfiguration {
   /// 方向键背景色
   final Color backgroundColor;
-  
+
   /// 方向键高亮背景色
   final Color highlightColor;
 
   /// 虚拟摇杆边框色
   final Color borderColor;
-  
+
   /// 虚拟摇杆边框宽度
   final double borderWidth;
 
@@ -304,30 +306,30 @@ class VirtualDPadConfiguration {
   /// 虚拟按键外边距
   final double margin;
 
-    /// 方向键大小
+  /// 方向键大小
   final double size;
 
-    /// 方向键图标色
+  /// 方向键图标色
   final Color iconColor;
 
   /// 方向键图标大小
   final double iconSize;
-  
+
   /// 每次点击移动的像素数
   final double stepSize;
-  
+
   /// 中心按钮大小
   final double centerButtonSize;
-  
+
   /// 中心按钮背景色
   final Color centerButtonColor;
-  
+
   /// 中心按钮文字样式
   final TextStyle centerButtonTextStyle;
-  
+
   /// 是否启用触觉反馈
   final bool enableHapticFeedback;
-  
+
   /// 构造函数
   const VirtualDPadConfiguration({
     this.backgroundColor = const Color(0x4D000000),
