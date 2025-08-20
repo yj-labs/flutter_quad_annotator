@@ -511,10 +511,8 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       _initializeRectangle();
     }
 
-    // 如果组件尺寸发生变化，保持四边形的相对位置
-    if (oldWidget.width != widget.width || oldWidget.height != widget.height) {
-      _handleSizeChange();
-    }
+    // 执行布局检查
+    _handleSizeChange();
   }
 
   /// 触发顶点变化回调
@@ -527,14 +525,23 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   /// 处理组件尺寸变化时的四边形位置调整
   /// 当容器尺寸发生变化时，保持四边形在图片中的相对位置不变
   void _handleSizeChange() {
+     // 如果图片还未加载或矩形还未初始化，跳过处理
+    if (_loadedImage == null || _rectangle == null) {
+      return;
+    }
+    
     // 保存当前四边形在图片中的真实坐标
     final savedImageCoordinates = _saveCurrentImageCoordinates();
 
     // 清除图片信息缓存以重新计算布局
     _clearImageInfoCache();
 
-    // 根据保存的坐标恢复四边形位置
-    _restoreQuadrilateralPosition(savedImageCoordinates);
+    // 在下一帧恢复四边形位置，确保新的布局信息已经生效
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _restoreQuadrilateralPosition(savedImageCoordinates);
+      }
+    });
   }
 
   /// 保存第一次进入时的初始坐标（图片坐标系）
