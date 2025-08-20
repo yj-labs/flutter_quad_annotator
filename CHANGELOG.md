@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-08-20
+
+### 🐛 **Bug Fixes**
+
+- **Screen Rotation Support:** Fixed virtual D-Pad position not updating correctly during screen orientation changes
+- **Magnifier Position Fix:** Fixed magnifier position not updating when screen rotates in fine adjustment mode
+- **Quadrilateral Position Fix:** Fixed quadrilateral annotation position not updating correctly after screen rotation
+
+### 🔧 **Technical Improvements**
+
+- **Smart Position Calculation:** Added intelligent relative position calculation for virtual D-Pad during screen size changes
+- **Graceful Fallback:** Implemented fallback mechanism to default position when relative position calculation fails
+- **Magnifier Synchronization:** Enhanced magnifier position synchronization with selected vertex during screen rotation
+- **Layout Optimization:** Improved layout handling in `didUpdateWidget` for better screen orientation support
+
+### 📱 **Enhanced User Experience**
+
+- **Seamless Rotation:** Virtual D-Pad now maintains its relative position when rotating between portrait and landscape modes
+- **Consistent Magnifier:** Magnifier follows the selected vertex correctly during screen orientation changes
+- **Stable Annotations:** Quadrilateral annotations maintain their correct position relative to the image during rotation
+- **Error Prevention:** Added comprehensive error handling and boundary checks for edge cases
+
+### 🛠️ **API Enhancements**
+
+- Added `_handleScreenSizeChange()` method in `VirtualDPadWidget` for screen size change handling
+- Added `_calculateRelativePosition()` method for intelligent position calculation
+- Added `_updateMagnifierPositionAfterSizeChange()` method in `QuadAnnotatorBox` for magnifier position updates
+- Enhanced `didUpdateWidget` lifecycle methods with screen rotation support
+
 ## [0.2.0] - 2025-08-19
 
 ### 🎯 **Fine Adjustment Mode**
@@ -57,7 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better state management for fine adjustment mode transitions
 - Optimized rendering performance for virtual controls
 
-## [0.1.0] - 2024-12-19
+## [0.1.0] - 2025-07-02
 
 ### 🔄 **Major Refactoring**
 
@@ -126,7 +155,7 @@ QuadAnnotatorBox(
 )
 ```
 
-## [0.0.1] - 2024-12-19
+## [0.0.1] - 2025-06-13
 
 ### Added
 

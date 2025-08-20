@@ -218,7 +218,7 @@ class _VirtualDPadWidgetState extends State<VirtualDPadWidget> {
   @override
   void didUpdateWidget(VirtualDPadWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // 检查屏幕尺寸是否发生变化（例如屏幕旋转）
     if (oldWidget.screenSize != widget.screenSize) {
       _handleScreenSizeChange(oldWidget.screenSize);
@@ -230,7 +230,7 @@ class _VirtualDPadWidgetState extends State<VirtualDPadWidget> {
   void _handleScreenSizeChange(Size oldScreenSize) {
     // 尝试根据旧屏幕中的相对位置计算新位置
     final newPosition = _calculateRelativePosition(oldScreenSize);
-    
+
     if (newPosition != null) {
       // 成功计算出相对位置，使用相对位置
       setState(() {
@@ -250,31 +250,35 @@ class _VirtualDPadWidgetState extends State<VirtualDPadWidget> {
     try {
       final totalSize = _calculateTotalSize();
       final margin = widget.config.margin;
-      
+
       // 计算在旧屏幕中的相对位置（0-1范围）
-      final oldAvailableWidth = oldScreenSize.width - totalSize.width - margin * 2;
-      final oldAvailableHeight = oldScreenSize.height - totalSize.height - margin * 2;
-      
+      final oldAvailableWidth =
+          oldScreenSize.width - totalSize.width - margin * 2;
+      final oldAvailableHeight =
+          oldScreenSize.height - totalSize.height - margin * 2;
+
       // 防止除零错误
       if (oldAvailableWidth <= 0 || oldAvailableHeight <= 0) {
         return null;
       }
-      
+
       final relativeX = (_position.dx - margin) / oldAvailableWidth;
       final relativeY = (_position.dy - margin) / oldAvailableHeight;
-      
+
       // 计算在新屏幕中的位置
-      final newAvailableWidth = widget.screenSize.width - totalSize.width - margin * 2;
-      final newAvailableHeight = widget.screenSize.height - totalSize.height - margin * 2;
-      
+      final newAvailableWidth =
+          widget.screenSize.width - totalSize.width - margin * 2;
+      final newAvailableHeight =
+          widget.screenSize.height - totalSize.height - margin * 2;
+
       // 防止除零错误或负值
       if (newAvailableWidth <= 0 || newAvailableHeight <= 0) {
         return null;
       }
-      
+
       final newX = margin + relativeX * newAvailableWidth;
       final newY = margin + relativeY * newAvailableHeight;
-      
+
       return Offset(newX, newY);
     } catch (e) {
       // 计算过程中出现任何错误，返回null以回退到默认位置

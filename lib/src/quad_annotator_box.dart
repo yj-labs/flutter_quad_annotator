@@ -525,11 +525,11 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   /// 处理组件尺寸变化时的四边形位置调整
   /// 当容器尺寸发生变化时，保持四边形在图片中的相对位置不变
   void _handleSizeChange() {
-     // 如果图片还未加载或矩形还未初始化，跳过处理
+    // 如果图片还未加载或矩形还未初始化，跳过处理
     if (_loadedImage == null || _rectangle == null) {
       return;
     }
-    
+
     // 保存当前四边形在图片中的真实坐标
     final savedImageCoordinates = _saveCurrentImageCoordinates();
 
