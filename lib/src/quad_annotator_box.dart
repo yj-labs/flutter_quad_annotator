@@ -540,7 +540,35 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _restoreQuadrilateralPosition(savedImageCoordinates);
+        // 如果当前处于方向键精调模式且显示放大镜，需要更新放大镜位置
+        _updateMagnifierPositionAfterSizeChange();
       }
+    });
+  }
+
+  /// 在屏幕尺寸变化后更新放大镜位置
+  /// 当处于方向键精调模式且显示放大镜时，重新计算放大镜位置
+  void _updateMagnifierPositionAfterSizeChange() {
+    // 只有在方向键精调模式下且显示放大镜时才需要更新
+    if (!_isDPadMode || !_showMagnifier || _rectangle == null) {
+      return;
+    }
+
+    // 只有在放大镜启用时才更新
+    if (!widget.magnifier.enabled) {
+      return;
+    }
+
+    setState(() {
+      // 获取当前选中顶点的新位置
+      final vertex = _rectangle!.getVertex(_selectedVertexIndex);
+      // 重新计算放大镜源位置（图片坐标系）
+      _magnifierSourcePosition = _convertScreenToImageCoordinates(vertex);
+      // 重新计算放大镜显示位置
+      _magnifierPosition = _calculateMagnifierPosition(
+        vertex,
+        _magnifierSourcePosition,
+      );
     });
   }
 

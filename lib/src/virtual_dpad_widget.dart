@@ -215,6 +215,73 @@ class _VirtualDPadWidgetState extends State<VirtualDPadWidget> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(VirtualDPadWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // 检查屏幕尺寸是否发生变化（例如屏幕旋转）
+    if (oldWidget.screenSize != widget.screenSize) {
+      _handleScreenSizeChange(oldWidget.screenSize);
+    }
+  }
+
+  /// 处理屏幕尺寸变化时的位置更新
+  /// [oldScreenSize] 旧的屏幕尺寸
+  void _handleScreenSizeChange(Size oldScreenSize) {
+    // 尝试根据旧屏幕中的相对位置计算新位置
+    final newPosition = _calculateRelativePosition(oldScreenSize);
+    
+    if (newPosition != null) {
+      // 成功计算出相对位置，使用相对位置
+      setState(() {
+        _position = _clampPosition(newPosition);
+      });
+    } else {
+      // 无法计算相对位置，回退到配置的默认位置
+      _initializePosition();
+      setState(() {});
+    }
+  }
+
+  /// 根据旧屏幕尺寸中的相对位置计算新位置
+  /// [oldScreenSize] 旧的屏幕尺寸
+  /// 返回新的位置，如果无法计算则返回null
+  Offset? _calculateRelativePosition(Size oldScreenSize) {
+    try {
+      final totalSize = _calculateTotalSize();
+      final margin = widget.config.margin;
+      
+      // 计算在旧屏幕中的相对位置（0-1范围）
+      final oldAvailableWidth = oldScreenSize.width - totalSize.width - margin * 2;
+      final oldAvailableHeight = oldScreenSize.height - totalSize.height - margin * 2;
+      
+      // 防止除零错误
+      if (oldAvailableWidth <= 0 || oldAvailableHeight <= 0) {
+        return null;
+      }
+      
+      final relativeX = (_position.dx - margin) / oldAvailableWidth;
+      final relativeY = (_position.dy - margin) / oldAvailableHeight;
+      
+      // 计算在新屏幕中的位置
+      final newAvailableWidth = widget.screenSize.width - totalSize.width - margin * 2;
+      final newAvailableHeight = widget.screenSize.height - totalSize.height - margin * 2;
+      
+      // 防止除零错误或负值
+      if (newAvailableWidth <= 0 || newAvailableHeight <= 0) {
+        return null;
+      }
+      
+      final newX = margin + relativeX * newAvailableWidth;
+      final newY = margin + relativeY * newAvailableHeight;
+      
+      return Offset(newX, newY);
+    } catch (e) {
+      // 计算过程中出现任何错误，返回null以回退到默认位置
+      return null;
+    }
+  }
+
   /// 初始化方向键面板位置
   void _initializePosition() {
     // 计算方向键面板的总尺寸
