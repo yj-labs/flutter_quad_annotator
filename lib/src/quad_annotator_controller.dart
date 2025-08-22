@@ -11,6 +11,9 @@ class QuadAnnotatorController {
   /// 拖动状态的回调函数
   bool Function()? onDragging;
 
+  /// 启动引导的回调函数
+  void Function()? onStartTutorial;
+
   /// 构造函数
   QuadAnnotatorController();
 
@@ -31,10 +34,17 @@ class QuadAnnotatorController {
     onReset?.call();
   }
 
+  /// 启动引导
+  /// 手动启动引导流程，从第一步开始
+  void startTutorial() {
+    onStartTutorial?.call();
+  }
+
   /// 释放资源
   /// 在不再使用controller时调用，清理回调函数
   void dispose() {
     onImageVertices = null;
     onReset = null;
+    onStartTutorial = null;
   }
 }

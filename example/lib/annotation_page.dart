@@ -220,6 +220,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
             centerButtonColor: Color(0xCD000000),
           ),
         ),
+        tutorial: TutorialConfiguration(),
       );
     } else {
       // 统一使用 ImageProvider
@@ -291,6 +292,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
             centerButtonColor: Colors.transparent,
           ),
         ),
+        tutorial: TutorialConfiguration(autoStart: true),
       );
     }
   }

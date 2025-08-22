@@ -16,6 +16,7 @@ import 'utils/geometry_utils.dart';
 import 'utils/image_utils.dart';
 import 'utils/magnifier_utils.dart';
 import 'virtual_dpad_widget.dart';
+import 'tutorial_overlay.dart';
 
 /// 四边形标注组件
 /// 支持在图片上绘制和编辑四边形区域
@@ -43,6 +44,9 @@ class QuadAnnotatorBox extends StatefulWidget {
 
   /// 边拖动结束时的回调函数（传递图片坐标系中的位置）
   final OnEdgeDragEnd? onEdgeDragEnd;
+
+  /// 引导完成或跳过时的回调函数
+  final VoidCallback? onTutorialCompleted;
 
   /// 组件的宽度（可选，如果不提供则自动适应父容器）
   final double? width;
@@ -99,6 +103,9 @@ class QuadAnnotatorBox extends StatefulWidget {
   /// 精调模式配置，传null则禁用精调模式
   final FineAdjustmentConfiguration? fineAdjustment;
 
+  /// 引导配置，传null则禁用引导功能
+  final TutorialConfiguration? tutorial;
+
   /// 控制器，用于外部控制组件状态
   final QuadAnnotatorController? controller;
 
@@ -115,6 +122,7 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.onVertexDragEnd,
     this.onEdgeDragStart,
     this.onEdgeDragEnd,
+    this.onTutorialCompleted,
     this.backgroundColor = Colors.transparent,
     this.borderColor = Colors.white,
     this.errorColor = Colors.red,
@@ -130,6 +138,7 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.preview = false,
     this.allowEdgeDrag = true,
     this.fineAdjustment = const FineAdjustmentConfiguration(),
+    this.tutorial,
   }) : imageProvider = null;
 
   /// 从ImageProvider创建QuadAnnotatorBox的便捷构造函数
@@ -145,6 +154,7 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.onVertexDragEnd,
     this.onEdgeDragStart,
     this.onEdgeDragEnd,
+    this.onTutorialCompleted,
     this.backgroundColor = Colors.transparent,
     this.borderColor = Colors.white,
     this.errorColor = Colors.red,
@@ -160,6 +170,7 @@ class QuadAnnotatorBox extends StatefulWidget {
     this.preview = false,
     this.allowEdgeDrag = true,
     this.fineAdjustment = const FineAdjustmentConfiguration(),
+    this.tutorial,
   }) : image = null;
 
   @override
@@ -253,6 +264,9 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   /// 是否处于虚拟方向键精调模式
   bool _isDPadMode = false;
 
+  /// 虚拟方向键面板的位置（用于记住用户拖拽后的位置）
+  Offset? _dpadPanelPosition;
+
   /// 当前选中的顶点索引（用于方向键模式）
   int _selectedVertexIndex = 0;
 
@@ -266,6 +280,22 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
 
   /// 双击检测的距离阈值（像素）
   static const double _doubleTapDistanceThreshold = 20.0;
+
+  /// 引导相关状态变量
+  /// 是否正在进行引导
+  bool _isTutorialActive = false;
+
+  /// 当前引导步骤
+  TutorialStep _currentTutorialStep = TutorialStep.none;
+
+  /// 引导覆盖层的GlobalKey
+  final GlobalKey _tutorialOverlayKey = GlobalKey();
+
+  /// 是否已完成初始化（用于自动开始引导）
+  bool _isInitialized = false;
+
+  /// 是否已完成引导（防止重复触发）
+  bool _isTutorialCompleted = false;
 
   /// 构建Widget
   @override
@@ -312,17 +342,17 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       width: _actualWidth,
       height: _actualHeight,
       color: widget.backgroundColor,
-      child: AnimatedBuilder(
-        animation: _breathingAnimation,
-        builder: (context, child) {
-          return Stack(
-            children: [
-              // 背景图片
-              Positioned.fill(
-                child: RawImage(image: _loadedImage, fit: BoxFit.contain),
-              ),
-              // 四边形绘制层
-              CustomPaint(
+      child: Stack(
+        children: [
+          // 背景图片
+          Positioned.fill(
+            child: RawImage(image: _loadedImage, fit: BoxFit.contain),
+          ),
+          // 四边形绘制层（包含呼吸动画）
+          AnimatedBuilder(
+            animation: _breathingAnimation,
+            builder: (context, child) {
+              return CustomPaint(
                 painter: QuadrilateralPainter(
                   image: _loadedImage!,
                   vertices: _rectangle!.vertices,
@@ -376,60 +406,77 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
                           color: Colors.transparent,
                         ),
                       ),
+              );
+            },
+          ),
+          // 精调模式提示（仅在拖拽精调模式下显示）
+          if (_isFineAdjustmentMode && !_isDPadMode)
+            Positioned(
+              top: 20,
+              left: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: widget.fineAdjustment?.hintBackgroundColor ??
+                      const Color(0x88000000),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  widget.fineAdjustment?.hintText ?? '精调模式：小幅度拖动进行精确调整',
+                  style: widget.fineAdjustment?.hintTextStyle ??
+                      const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
               ),
-              // 精调模式提示（仅在拖拽精调模式下显示）
-              if (_isFineAdjustmentMode && !_isDPadMode)
-                Positioned(
-                  top: 20,
-                  left: 20,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: widget.fineAdjustment?.hintBackgroundColor ??
-                          const Color(0x88000000),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      widget.fineAdjustment?.hintText ?? '精调模式：小幅度拖动进行精确调整',
-                      style: widget.fineAdjustment?.hintTextStyle ??
-                          const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                    ),
-                  ),
+            ),
+          // 点击方向键以外区域退出精调模式
+          if (_isDPadMode)
+            Positioned.fill(
+              child: GestureDetector(
+                onTapDown: (details) {
+                  // 点击方向键以外的区域退出精调模式
+                  _exitDPadMode();
+                },
+                child: Container(
+                  color: Colors.transparent,
                 ),
-              // 点击方向键以外区域退出精调模式
-              if (_isDPadMode)
-                Positioned.fill(
-                  child: GestureDetector(
-                    onTapDown: (details) {
-                      // 点击方向键以外的区域退出精调模式
-                      _exitDPadMode();
-                    },
-                    child: Container(
-                      color: Colors.transparent,
-                    ),
-                  ),
-                ),
-              // 虚拟方向键组件
-              if (_isDPadMode && widget.fineAdjustment != null)
-                VirtualDPadWidget(
-                  config: widget.fineAdjustment!.dpadConfig,
-                  screenSize: Size(_actualWidth, _actualHeight),
-                  selectedVertexIndex: _selectedVertexIndex,
-                  totalVertices: _rectangle?.vertices.length ?? 4,
-                  onDirectionPressed: _onDPadDirectionPressed,
-                  onVertexChanged: _onDPadVertexChanged,
-                  onExit: _exitDPadMode,
-                ),
-            ],
-          );
-        },
+              ),
+            ),
+          // 虚拟方向键组件
+          if (_isDPadMode && widget.fineAdjustment != null)
+            VirtualDPadWidget(
+              config: widget.fineAdjustment!.dpadConfig,
+              screenSize: Size(_actualWidth, _actualHeight),
+              selectedVertexIndex: _selectedVertexIndex,
+              totalVertices: _rectangle?.vertices.length ?? 4,
+              onDirectionPressed: _onDPadDirectionPressed,
+              onVertexChanged: _onDPadVertexChanged,
+              onExit: _exitDPadMode,
+              onPanelDragged: _onDPadPanelDragged,
+              onPositionChanged: _onDPadPositionChanged,
+              initialPosition: _dpadPanelPosition,
+              enablePanelDrag: !_isTutorialActive ||
+                  _currentTutorialStep ==
+                      TutorialStep.dragDPadPanel, // 除了步骤6外，引导期间禁用面板拖动
+            ),
+          // 引导覆盖层（独立于呼吸动画）
+          if (_isTutorialActive && widget.tutorial != null)
+            SimpleTutorialOverlay(
+              key: _tutorialOverlayKey,
+              config: widget.tutorial!,
+              currentStep: _currentTutorialStep,
+              screenSize: Size(_actualWidth, _actualHeight),
+              highlightRect: _getTutorialHighlightRect(),
+              onSkip: stopTutorial,
+              onComplete: stopTutorial,
+            ),
+        ],
       ),
     );
   }
@@ -443,6 +490,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       widget.controller!.onImageVertices = (() => _getImageVertices());
       widget.controller!.onReset = () => _resetVertices();
       widget.controller!.onDragging = (() => _isDragging);
+      widget.controller!.onStartTutorial = () => _startTutorialFromController();
     }
 
     // 初始化呼吸灯动画控制器
@@ -504,14 +552,15 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
         _loadedImage = widget.image;
         _initializeRectangle();
       }
+      return; // 图片变化时直接返回，避免其他检查
     }
 
-    // 检查矩形参数是否发生变化
-    if (oldWidget.rectangle != widget.rectangle) {
-      _initializeRectangle();
-    }
+    // // 检查矩形参数是否发生变化
+    // if (oldWidget.rectangle != widget.rectangle) {
+    //   _initializeRectangle();
+    // }
 
-    // 执行布局检查
+    // 检查容器尺寸是否发生变化（如屏幕旋转）
     _handleSizeChange();
   }
 
@@ -544,6 +593,18 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
         _updateMagnifierPositionAfterSizeChange();
       }
     });
+  }
+
+  /// 处理虚拟方向键面板拖拽
+  void _onDPadPanelDragged() {
+    // 引导操作检测 - 拖拽方向键面板
+    completeTutorial();
+  }
+
+  /// 处理虚拟方向键面板位置变化
+  /// 保存用户拖拽后的面板位置，以便下次打开时使用
+  void _onDPadPositionChanged(Offset position) {
+    _dpadPanelPosition = position;
   }
 
   /// 在屏幕尺寸变化后更新放大镜位置
@@ -702,11 +763,16 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
 
       // 触发重建以显示矩形
       if (mounted) {
-        setState(() {});
+        setState(() {
+          // 标记初始化完成，在检查引导之前设置
+          _isInitialized = true;
+        });
         // 在下一帧触发初始矩形的顶点变化回调，避免在构建过程中调用setState
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             _onVerticesChanged();
+            // 检查是否需要自动开始引导（延迟逻辑已在checkAutoStartTutorial中处理）
+            checkAutoStartTutorial();
           }
         });
       }
@@ -893,6 +959,9 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
         setState(() {
           _isFineAdjustmentMode = true;
         });
+
+        // 引导操作检测 - 长按进入精调模式（立即隐藏引导）
+        exitLongPressVertexStep();
       }
     });
   }
@@ -943,6 +1012,9 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
         );
       }
     });
+
+    // 引导操作检测 - 成功进入虚拟按键模式后进入下一步
+    enterUseDPadStep();
   }
 
   /// 退出虚拟方向键精调模式
@@ -951,6 +1023,9 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       _isDPadMode = false;
       _showMagnifier = false;
     });
+
+    // 如果正在进行方向键相关的引导，停止引导
+    handleDPadModeExit();
   }
 
   /// 处理虚拟方向键方向按下
@@ -980,6 +1055,9 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       }
     });
 
+    // 引导操作检测 - 使用方向键完成后进入下一步
+    enterSwitchVertexStep();
+
     // 触发顶点变化回调
     _onVerticesChanged();
   }
@@ -1006,6 +1084,9 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
         );
       }
     });
+
+    // 引导操作检测 - 切换顶点
+    enterDragDPadPanelStep();
   }
 
   /// 检测双击事件
@@ -1044,6 +1125,88 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     if (mode == FineAdjustmentMode.dpad || mode == FineAdjustmentMode.both) {
       _enterDPadMode(vertexIndex);
     }
+
+    // // 引导操作检测 - 双击顶点
+    // exitDoubleTapVertexStep();
+  }
+
+  /// 获取当前步骤需要高亮的区域
+  Rect? _getTutorialHighlightRect() {
+    if (!_isTutorialActive || _rectangle == null) return null;
+
+    switch (_currentTutorialStep) {
+      case TutorialStep.dragVertex:
+      case TutorialStep.longPressVertex:
+      case TutorialStep.doubleTapVertex:
+        // 高亮第一个顶点
+        final vertex = _rectangle!.getVertex(0);
+        const radius = 30.0;
+        return Rect.fromCenter(
+          center: Offset(vertex.x, vertex.y),
+          width: radius * 2,
+          height: radius * 2,
+        );
+      case TutorialStep.useDPad:
+      case TutorialStep.dragDPadPanel:
+        // 高亮虚拟方向键区域（步骤4、6统一处理）
+        if (_isDPadMode && widget.fineAdjustment != null) {
+          // 根据虚拟方向键配置计算实际位置
+          final config = widget.fineAdjustment!.dpadConfig;
+          final alignment = config.position;
+          final centerSize = config.centerButtonSize;
+          final diameter = centerSize + config.size * 2;
+          final margin = config.margin;
+
+          // 计算可用空间
+          final availableWidth = _actualWidth - diameter - margin * 2;
+          final availableHeight = _actualHeight - diameter - margin * 2;
+
+          // 计算实际位置
+          final x =
+              margin + (alignment.x + 1) / 2 * availableWidth + diameter / 2;
+          final y =
+              margin + (alignment.y + 1) / 2 * availableHeight + diameter / 2;
+
+          // 统一使用虚拟方向键面板的完整大小
+          return Rect.fromCenter(
+            center: Offset(x, y),
+            width: diameter,
+            height: diameter,
+          );
+        }
+        return null;
+      case TutorialStep.switchVertex:
+        // switchVertex步骤只高亮中间按钮
+        if (_isDPadMode && widget.fineAdjustment != null) {
+          // 根据虚拟方向键配置计算中间按钮位置
+          final config = widget.fineAdjustment!.dpadConfig;
+          final alignment = config.position;
+          final centerSize = config.centerButtonSize;
+          final diameter = centerSize + config.size * 2;
+          final margin = config.margin;
+
+          // 计算可用空间
+          final availableWidth = _actualWidth - diameter - margin * 2;
+          final availableHeight = _actualHeight - diameter - margin * 2;
+
+          // 计算面板中心位置
+          final panelCenterX =
+              margin + (alignment.x + 1) / 2 * availableWidth + diameter / 2;
+          final panelCenterY =
+              margin + (alignment.y + 1) / 2 * availableHeight + diameter / 2;
+
+          // 只聚焦中间按钮区域
+          return Rect.fromCenter(
+            center: Offset(panelCenterX, panelCenterY),
+            width: centerSize,
+            height: centerSize,
+          );
+        }
+        return null;
+      case TutorialStep.none:
+      case TutorialStep.completed:
+        return null;
+    }
   }
 }
 
@@ -1074,6 +1237,8 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
           _draggedVertexIndex = i;
           _draggedEdgeIndex = -1;
           _isDragging = true;
+          // 引导操作检测 - 确认开始拖拽顶点时隐藏引导层
+          exitDragVertexStep();
           // 启用放大镜效果（仅在非方向键模式下）
           if (widget.magnifier.enabled && !_isDPadMode) {
             _showMagnifier = true;
@@ -1158,6 +1323,13 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
     // 取消长按定时器
     _cancelLongPressTimer();
 
+    // 触发拖动结束回调（在退出精调模式之前，确保引导检测能正确工作）
+    if (_draggedVertexIndex != -1) {
+      _handleVertexDragEnd();
+    } else if (_draggedEdgeIndex != -1) {
+      _handleEdgeDragEnd(details.localPosition.toPoint());
+    }
+
     // 退出拖拽精调模式（但不退出方向键精调模式）
     if (!_isDPadMode) {
       _exitFineAdjustmentMode();
@@ -1168,11 +1340,9 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
       _rectangle?.validateQuadrilateral();
     });
 
-    // 触发拖动结束回调
-    if (_draggedVertexIndex != -1) {
-      _handleVertexDragEnd();
-    } else if (_draggedEdgeIndex != -1) {
-      _handleEdgeDragEnd(details.localPosition.toPoint());
+    // 处理其他拖动结束逻辑
+    if (_draggedEdgeIndex != -1) {
+      // 边拖动结束的其他处理已在_handleEdgeDragEnd中完成
     }
 
     // 重置拖动状态（但在方向键模式下保持放大镜显示）
@@ -1252,6 +1422,11 @@ extension _GestureHandlers on _QuadAnnotatorBoxState {
       final viewVertex = _rectangle!.getVertex(_draggedVertexIndex);
       final imageCoordinates = _convertToImageCoordinates([viewVertex]);
       widget.onVertexDragEnd?.call(_draggedVertexIndex, imageCoordinates.first);
+      // 引导操作检测 - 拖拽操作完成后进入下一步
+      enterLongPressVertexStep();
+
+      // 引导操作检测 - 精调模式拖拽完成后进入下一步
+      enterDoubleTapVertexStep();
     }
   }
 
@@ -1282,5 +1457,222 @@ extension _DoubleValidation on double? {
   bool get isValid {
     final value = this;
     return value != null && value.isFinite && !value.isNaN && value > 0;
+  }
+}
+
+/// 扩展方法：引导处理
+extension _TutorialHandlers on _QuadAnnotatorBoxState {
+  /// 开始指定步骤的引导
+  /// [step] 要开始的引导步骤
+  void startTutorialStep(TutorialStep step) {
+    if (widget.tutorial == null || !widget.tutorial!.enabled) {
+      return;
+    }
+
+    _updateState(() {
+      _currentTutorialStep = step;
+      _isTutorialActive = true;
+    });
+
+    // 引导开始时停止呼吸动画，避免持续重建
+    if (widget.breathing.enabled && _breathingController.isAnimating) {
+      _breathingController.stop();
+    }
+  }
+
+  /// 停止引导
+  void stopTutorial() {
+    _updateState(() {
+      _isTutorialActive = false;
+      _currentTutorialStep = TutorialStep.none;
+      _isTutorialCompleted = true; // 标记引导已完成
+    });
+
+    // 引导结束时恢复呼吸动画
+    if (widget.breathing.enabled && !_breathingController.isAnimating) {
+      _breathingController.repeat(reverse: true);
+    }
+
+    // 调用引导完成回调
+    widget.onTutorialCompleted?.call();
+  }
+
+  /// 从控制器启动引导
+  /// 通过控制器手动启动引导流程，从第一步开始
+  void _startTutorialFromController() {
+    if (widget.tutorial != null &&
+        widget.tutorial!.enabled &&
+        _rectangle != null) {
+      startTutorialStep(TutorialStep.dragVertex);
+    }
+  }
+
+  /// 进入下一个引导步骤
+  /// 按照预定义的顺序进入下一个引导步骤，带有延迟和消失动画
+  void nextTutorialStep() {
+    if (widget.tutorial == null || !widget.tutorial!.enabled) {
+      return;
+    }
+
+    // 记录当前步骤
+    final currentStep = _currentTutorialStep;
+
+    // 先隐藏当前步骤并重置状态
+    _updateState(() {
+      _isTutorialActive = false;
+      _currentTutorialStep = TutorialStep.none;
+    });
+
+    // 延迟后显示下一步骤，但要检查是否还在操作状态
+    Timer(widget.tutorial?.stepInterval ?? const Duration(milliseconds: 1500),
+        () {
+      if (!mounted || _isTutorialActive) {
+        return;
+      }
+
+      switch (currentStep) {
+        case TutorialStep.dragVertex:
+          startTutorialStep(TutorialStep.longPressVertex);
+          break;
+        case TutorialStep.longPressVertex:
+          startTutorialStep(TutorialStep.doubleTapVertex);
+          break;
+        case TutorialStep.doubleTapVertex:
+          startTutorialStep(TutorialStep.useDPad);
+          break;
+        case TutorialStep.useDPad:
+          startTutorialStep(TutorialStep.switchVertex);
+          break;
+        case TutorialStep.switchVertex:
+          startTutorialStep(TutorialStep.dragDPadPanel);
+          break;
+        case TutorialStep.dragDPadPanel:
+          // 显示完成消息
+          showCompletionMessage();
+          break;
+        default:
+          stopTutorial();
+          break;
+      }
+    });
+  }
+
+  /// 显示引导完成消息
+  void showCompletionMessage() {
+    _updateState(() {
+      _isTutorialActive = true;
+      _currentTutorialStep = TutorialStep.completed;
+    });
+
+    // 显示完成消息后立即结束引导
+    // 移除延迟，避免影响用户交互
+    Future.microtask(() {
+      if (mounted) {
+        stopTutorial();
+      }
+    });
+  }
+
+  /// 开始拖拽顶点引导
+  void startDragVertexTutorial() {
+    startTutorialStep(TutorialStep.dragVertex);
+  }
+
+  /// 检查是否应该自动开始引导
+  void checkAutoStartTutorial() {
+    if (widget.tutorial != null &&
+        widget.tutorial!.enabled &&
+        widget.tutorial!.autoStart &&
+        !_isTutorialActive &&
+        !_isTutorialCompleted && // 检查是否已完成引导
+        _isInitialized &&
+        _rectangle != null) {
+      // 延迟开始引导，确保UI已经渲染完成
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Timer(
+              widget.tutorial?.startDelay ?? const Duration(milliseconds: 500),
+              () {
+            if (mounted) {
+              startDragVertexTutorial();
+            }
+          });
+        }
+      });
+    }
+  }
+
+  // ==================== 引导退出方法 ====================
+  /// 退出拖拽顶点引导步骤
+  void exitDragVertexStep() {
+    if (_currentTutorialStep == TutorialStep.dragVertex) {
+      _updateState(() {
+        _isTutorialActive = false;
+      });
+    }
+  }
+
+  /// 退出长按顶点引导步骤
+  void exitLongPressVertexStep() {
+    if (_currentTutorialStep == TutorialStep.longPressVertex) {
+      _updateState(() {
+        _isTutorialActive = false;
+      });
+    }
+  }
+
+  // ==================== 引导进入方法 ====================
+  /// 进入长按顶点引导步骤
+  void enterLongPressVertexStep() {
+    if (_currentTutorialStep == TutorialStep.dragVertex) {
+      nextTutorialStep();
+    }
+  }
+
+  /// 进入双击顶点引导步骤
+  void enterDoubleTapVertexStep() {
+    if (_currentTutorialStep == TutorialStep.longPressVertex &&
+        _isFineAdjustmentMode) {
+      nextTutorialStep();
+    }
+  }
+
+  /// 进入使用方向键引导步骤
+  void enterUseDPadStep() {
+    if (_currentTutorialStep == TutorialStep.doubleTapVertex) {
+      nextTutorialStep();
+    }
+  }
+
+  /// 处理引导操作检测 - 使用方向键时隐藏引导
+  /// 进入切换顶点引导步骤
+  void enterSwitchVertexStep() {
+    if (_currentTutorialStep == TutorialStep.useDPad) {
+      nextTutorialStep();
+    }
+  }
+
+  /// 进入拖拽面板引导步骤
+  void enterDragDPadPanelStep() {
+    if (_currentTutorialStep == TutorialStep.switchVertex) {
+      nextTutorialStep();
+    }
+  }
+
+  /// 完成引导流程
+  void completeTutorial() {
+    if (_currentTutorialStep == TutorialStep.dragDPadPanel) {
+      nextTutorialStep();
+    }
+  }
+
+  /// 处理方向键模式退出时的引导
+  void handleDPadModeExit() {
+    // 如果正在进行方向键相关的引导，停止引导
+    if (_currentTutorialStep == TutorialStep.useDPad ||
+        _currentTutorialStep == TutorialStep.switchVertex ||
+        _currentTutorialStep == TutorialStep.dragDPadPanel) {
+      stopTutorial();
+    }
   }
 }

@@ -274,7 +274,8 @@ class FineAdjustmentConfiguration {
   const FineAdjustmentConfiguration({
     this.longPressDuration = const Duration(milliseconds: 800),
     this.sensitivity = 0.2,
-    this.hintText = '精调模式：小幅度拖动进行精确调整',
+    this.hintText =
+        'Fine adjustment mode: Drag slightly for precise adjustments',
     this.hintTextStyle = const TextStyle(
       color: Colors.white,
       fontSize: 12,
@@ -350,6 +351,180 @@ class VirtualDPadConfiguration {
       fontWeight: FontWeight.w500,
     ),
     this.enableHapticFeedback = true,
+  });
+}
+
+/// 引导步骤枚举
+enum TutorialStep {
+  /// 无引导
+  none,
+
+  /// 步骤1：拖拽顶点引导
+  dragVertex,
+
+  /// 步骤2：长按进入精调模式引导
+  longPressVertex,
+
+  /// 步骤3：双击顶点引导
+  doubleTapVertex,
+
+  /// 步骤4：使用方向键引导
+  useDPad,
+
+  /// 步骤5：切换顶点引导
+  switchVertex,
+
+  /// 步骤6：拖拽方向键面板引导
+  dragDPadPanel,
+
+  /// 引导完成
+  completed,
+}
+
+/// 引导动画类型
+enum TutorialAnimationType {
+  bounce,
+  pulse,
+  breathing,
+  shake,
+  rotate,
+}
+
+/// 引导配置类
+class TutorialConfiguration {
+  /// 是否启用引导
+  final bool enabled;
+
+  /// 是否自动开始引导
+  final bool autoStart;
+
+  /// 遮罩颜色
+  final Color overlayColor;
+
+  /// 跳过按钮文本
+  final String skipButtonText;
+
+  /// 跳过按钮样式
+  final ButtonStyle? skipButtonStyle;
+
+  /// 引导提示样式
+  final TextStyle hintStyle;
+
+  /// 引导提示背景颜色
+  final Color hintBackgroundColor;
+
+  /// 引导提示圆角半径
+  final double hintBorderRadius;
+
+  /// 引导提示内边距
+  final EdgeInsets hintPadding;
+
+  /// 引导提示容器边距（距离屏幕边缘的距离）
+  final double hintContainerMargin;
+
+  /// 引导提示容器预估高度（用于位置计算）
+  final double hintEstimatedHeight;
+
+  /// 连接线长度
+  final double connectionLineLength;
+
+  /// 图标尺寸
+  final double iconSize;
+
+  /// 连接线到图标的间距
+  final double lineToIconDistance;
+
+  /// 图标到文本的间距
+  final double iconToTextDistance;
+
+  /// 聚光灯边距（在实际内容基础上增加的大小）
+  final double spotlightPadding;
+
+  /// 聚光灯动画持续时间
+  final Duration spotlightAnimationDuration;
+
+  /// 高亮边框颜色
+  final Color highlightBorderColor;
+
+  /// 高亮边框宽度
+  final double highlightBorderWidth;
+
+  /// 是否启用脉冲动画
+  final bool enablePulseAnimation;
+
+  /// 脉冲动画颜色
+  final Color pulseColor;
+
+  /// 脉冲动画持续时间
+  final Duration pulseAnimationDuration;
+
+  /// 引导开始的延迟时间
+  final Duration startDelay;
+
+  /// 引导步骤之间的间隔时间
+  final Duration stepInterval;
+
+  /// 每个步骤的引导文本
+  final Map<TutorialStep, String> stepTexts;
+
+  /// 每个步骤的聚光灯边距
+  final Map<TutorialStep, double> stepSpotlightPadding;
+
+  /// 构造函数
+  const TutorialConfiguration({
+    this.enabled = true,
+    this.autoStart = false,
+    this.overlayColor = const Color(0xCC000000),
+    this.skipButtonText = '跳过',
+    this.skipButtonStyle,
+    this.hintStyle = const TextStyle(
+      color: Colors.white,
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+    ),
+    this.hintBackgroundColor = Colors.transparent,
+    this.hintBorderRadius = 8.0,
+    this.hintPadding = EdgeInsets.zero,
+    this.hintContainerMargin = 20.0,
+    this.hintEstimatedHeight = 150.0,
+    this.connectionLineLength = 60.0,
+    this.iconSize = 56.0,
+    this.lineToIconDistance = 20.0,
+    this.iconToTextDistance = 12.0,
+    this.spotlightPadding = 20.0,
+    this.spotlightAnimationDuration = const Duration(milliseconds: 800),
+    this.highlightBorderColor = Colors.orange,
+    this.highlightBorderWidth = 3.0,
+    this.enablePulseAnimation = true,
+    this.pulseColor = Colors.orange,
+    this.pulseAnimationDuration = const Duration(milliseconds: 2000),
+    this.startDelay = const Duration(milliseconds: 1000),
+    this.stepInterval = const Duration(milliseconds: 800),
+    this.stepTexts = const {
+      TutorialStep.none: '',
+      TutorialStep.dragVertex:
+          'Drag the highlighted vertex to adjust the quadrilateral shape.\nPerfect for quick and rough positioning.',
+      TutorialStep.longPressVertex:
+          'Long press the highlighted vertex to enter precision mode.\nIdeal for fine-tuning vertex positions with enhanced accuracy.',
+      TutorialStep.doubleTapVertex:
+          'Double tap the highlighted vertex to reveal the virtual D-pad.\nEnables pixel-perfect vertex positioning with directional controls.',
+      TutorialStep.useDPad:
+          'Use the directional buttons to move the vertex precisely.\nEach tap moves the vertex by one pixel for ultimate precision.',
+      TutorialStep.switchVertex:
+          'Tap the center button to switch between different vertices.\nCycle through all four corners of your quadrilateral.',
+      TutorialStep.dragDPadPanel:
+          'Hold and drag the center of the D-pad panel to reposition it.\nPlace the controls wherever they feel most comfortable.',
+      TutorialStep.completed:
+          'Congratulations! You\'ve mastered all the annotation features.\nYou\'re now ready to create precise quadrilateral annotations.',
+    },
+    this.stepSpotlightPadding = const {
+      TutorialStep.dragVertex: 20.0,
+      TutorialStep.longPressVertex: 20.0,
+      TutorialStep.doubleTapVertex: 20.0,
+      TutorialStep.useDPad: 0.0,
+      TutorialStep.switchVertex: 0.0,
+      TutorialStep.dragDPadPanel: 0.0,
+    },
   });
 }
 

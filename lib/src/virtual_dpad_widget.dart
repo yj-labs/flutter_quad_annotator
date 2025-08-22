@@ -165,6 +165,21 @@ class VirtualDPadWidget extends StatefulWidget {
   /// 退出精调模式回调
   final VoidCallback onExit;
 
+  /// 拖拽面板回调（可选）
+  final VoidCallback? onPanelDragged;
+
+  /// 面板位置变化回调（可选）
+  final void Function(Offset position)? onPositionChanged;
+
+  /// 是否允许拖动面板（默认为true）
+  final bool enablePanelDrag;
+
+  /// 是否允许退出虚拟按键模式（默认为true）
+  final bool enableExit;
+
+  /// 初始位置（可选，用于记住用户拖拽后的位置）
+  final Offset? initialPosition;
+
   const VirtualDPadWidget({
     super.key,
     required this.config,
@@ -174,6 +189,11 @@ class VirtualDPadWidget extends StatefulWidget {
     required this.onDirectionPressed,
     required this.onVertexChanged,
     required this.onExit,
+    this.onPanelDragged,
+    this.onPositionChanged,
+    this.enablePanelDrag = true,
+    this.enableExit = true,
+    this.initialPosition,
   });
 
   @override
@@ -201,6 +221,9 @@ class _VirtualDPadWidgetState extends State<VirtualDPadWidget> {
 
   /// 是否正在拖拽面板
   bool _isDraggingPanel = false;
+
+  /// 中间按钮是否被按下（用于高亮效果）
+  bool _isCenterButtonPressed = false;
 
   @override
   void initState() {
@@ -288,6 +311,12 @@ class _VirtualDPadWidgetState extends State<VirtualDPadWidget> {
 
   /// 初始化方向键面板位置
   void _initializePosition() {
+    // 如果有传入的初始位置，优先使用
+    if (widget.initialPosition != null) {
+      _position = _clampPosition(widget.initialPosition!);
+      return;
+    }
+
     // 计算方向键面板的总尺寸
     final totalSize = _calculateTotalSize();
 
@@ -335,13 +364,24 @@ class _VirtualDPadWidgetState extends State<VirtualDPadWidget> {
 
   /// 处理拖拽更新
   void _onPanUpdate(DragUpdateDetails details) {
+    // 如果禁用面板拖动，则不处理
+    if (!widget.enablePanelDrag) return;
+
     setState(() {
       _position = _clampPosition(_position + details.delta);
     });
+
+    // 触发位置变化回调
+    widget.onPositionChanged?.call(_position);
+
+    // 触发拖拽面板回调
+    widget.onPanelDragged?.call();
   }
 
   /// 处理拖拽开始
   void _onPanStart(DragStartDetails details) {
+    // 如果禁用面板拖动，则不处理
+    if (!widget.enablePanelDrag) return;
     setState(() {
       _isDragging = true;
       _isDraggingPanel = true;
@@ -494,11 +534,27 @@ class _VirtualDPadWidgetState extends State<VirtualDPadWidget> {
             onTapDown: (details) {
               if (_isCenterButtonTap(details.localPosition) &&
                   !_isDraggingPanel) {
+                // 设置中间按钮按下状态
+                setState(() {
+                  _isCenterButtonPressed = true;
+                });
                 // 只有在非拖拽状态下才允许切换顶点
                 final nextIndex =
                     (widget.selectedVertexIndex + 1) % widget.totalVertices;
                 widget.onVertexChanged(nextIndex);
               }
+            },
+            onTapUp: (details) {
+              // 释放中间按钮按下状态
+              setState(() {
+                _isCenterButtonPressed = false;
+              });
+            },
+            onTapCancel: () {
+              // 取消时也要释放按下状态
+              setState(() {
+                _isCenterButtonPressed = false;
+              });
             },
             onPanDown: (details) {
               if (!_isCenterButtonTap(details.localPosition)) {
@@ -557,7 +613,9 @@ class _VirtualDPadWidgetState extends State<VirtualDPadWidget> {
                       width: widget.config.centerButtonSize,
                       height: widget.config.centerButtonSize,
                       decoration: BoxDecoration(
-                        color: widget.config.centerButtonColor,
+                        color: _isCenterButtonPressed
+                            ? widget.config.highlightColor // 按下时更透明
+                            : widget.config.centerButtonColor,
                         border: Border.all(
                           color: widget.config.borderColor,
                           width: widget.config.borderWidth,
