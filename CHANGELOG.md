@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-08-22
+
+### 🎯 **Tutorial System Enhancement**
+
+- **NEW:** Added comprehensive tutorial system with step-by-step guidance
+- **NEW:** Interactive tutorial overlay with spotlight effects and animations
+- **NEW:** Six tutorial steps covering all major features (drag vertex, long press, double tap, virtual D-Pad usage)
+- **NEW:** Tutorial configuration with customizable text, colors, and timing
+- **NEW:** Manual tutorial control via QuadAnnotatorController
+- **NEW:** Tutorial completion detection and callbacks
+
+### ✨ **Virtual D-Pad Improvements**
+
+- **Enhanced:** Virtual D-Pad panel position memory - remembers user's preferred position
+- **Enhanced:** Improved panel dragging experience with smooth animations
+- **Enhanced:** Better position restoration when reopening the panel
+- **Enhanced:** Optimized panel positioning logic for different screen sizes
+
+### 🐛 **Critical Bug Fixes**
+
+- **Fixed:** Tutorial overlay position not updating during screen rotation (steps 1-3)
+- **Fixed:** Quadrilateral annotation position sync issues during orientation changes
+- **Fixed:** Tutorial spotlight size and positioning inconsistencies
+- **Fixed:** Virtual D-Pad panel position reset issues
+- **Fixed:** Tutorial step progression and completion detection
+
+### 🚀 **Performance Optimizations**
+
+- **Optimized:** didUpdateWidget performance - only processes size changes when dimensions actually change
+- **Optimized:** Reduced unnecessary layout calculations during widget updates
+- **Optimized:** Improved size change detection for better responsiveness
+- **Optimized:** Enhanced memory usage with smart caching mechanisms
+
+### 🔧 **Technical Improvements**
+
+- **Enhanced:** Screen rotation handling with improved position synchronization
+- **Enhanced:** Widget lifecycle management for better stability
+- **Enhanced:** Size change detection algorithm for more accurate updates
+- **Enhanced:** Tutorial state management and persistence
+- **Enhanced:** Error handling and edge case coverage
+
+### 📱 **User Experience Enhancements**
+
+- **Improved:** Seamless tutorial experience with clear visual guidance
+- **Improved:** Better feedback during tutorial interactions
+- **Improved:** More intuitive virtual D-Pad panel positioning
+- **Improved:** Consistent behavior across all tutorial steps
+- **Improved:** Enhanced accessibility and usability
+
+### 🛠️ **API Enhancements**
+
+- Added `TutorialConfiguration` class for comprehensive tutorial customization
+- Added `QuadAnnotatorController.startTutorial()` method for manual tutorial control
+- Added tutorial completion callbacks and event handling
+- Enhanced virtual D-Pad position management APIs
+- Improved size change detection and handling methods
+
 ## [0.2.1] - 2025-08-20
 
 ### 🐛 **Bug Fixes**

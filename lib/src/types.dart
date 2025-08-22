@@ -475,7 +475,7 @@ class TutorialConfiguration {
     this.enabled = true,
     this.autoStart = false,
     this.overlayColor = const Color(0xCC000000),
-    this.skipButtonText = '跳过',
+    this.skipButtonText = 'Skip',
     this.skipButtonStyle,
     this.hintStyle = const TextStyle(
       color: Colors.white,

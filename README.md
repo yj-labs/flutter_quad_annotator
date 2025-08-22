@@ -49,20 +49,22 @@ _或者运行本地示例应用查看完整功能演示_
 
 ## 功能特性
 
-## 功能特性
-
 - ✅ **四边形顶点拖拽** - 支持拖拽四个顶点来调整四边形形状
 - ✅ **四边形边线拖拽** - 支持拖拽边线来移动整个四边形
 - ✅ **放大镜功能** - 拖拽时显示放大镜，便于精确定位
 - ✅ **精调模式** - 长按或双击顶点进入精调模式，支持像素级精确调整
 - ✅ **虚拟方向键** - 精调模式下显示虚拟方向键，支持上下左右精确移动
 - ✅ **顶点切换** - 精调模式下可快速切换不同顶点进行调整
-- ✅ **屏幕旋转支持** - 完美支持屏幕旋转，虚拟方向键和放大镜位置智能更新
+- ✅ **交互式教程系统** - 内置分步引导教程，帮助用户快速掌握所有功能
+- ✅ **教程自定义** - 支持自定义教程文本、颜色、动画效果等
+- ✅ **智能位置记忆** - 虚拟方向键面板记住用户偏好位置
+- ✅ **屏幕旋转支持** - 完美支持屏幕旋转，所有 UI 元素位置智能更新
 - ✅ **呼吸动画效果** - 可配置的呼吸灯动画，提升视觉体验
 - ✅ **高度可定制** - 支持自定义颜色、大小、样式等
-- ✅ **配置对象化** - 呼吸动画、放大镜和精调模式配置抽象为独立对象
+- ✅ **配置对象化** - 呼吸动画、放大镜、精调模式和教程配置抽象为独立对象
 - ✅ **事件回调** - 提供丰富的拖拽事件回调
 - ✅ **单点触控** - 智能的单点触控识别，避免多点触控干扰
+- ✅ **性能优化** - 智能的尺寸变化检测，减少不必要的重建
 
 ## 📋 平台支持
 
@@ -84,7 +86,7 @@ _或者运行本地示例应用查看完整功能演示_
 ````yaml
 ```yaml
 dependencies:
-  flutter_quad_annotator: ^0.2.1
+  flutter_quad_annotator: ^0.3.0
 ````
 
 然后运行：
@@ -98,8 +100,6 @@ flutter pub get
 ```dart
 import 'package:flutter_quad_annotator/flutter_quad_annotator.dart';
 ```
-
-## 基本用法
 
 ## 基本用法
 
@@ -127,6 +127,19 @@ QuadAnnotatorBox(
       stepSize: 1.0,
       position: Alignment.bottomRight,
     ),
+  ),
+  tutorial: const TutorialConfiguration(
+    enabled: true,
+    autoStart: false, // 手动启动教程
+    overlayColor: Color(0xCC000000),
+    skipButtonText: '跳过',
+    hintStyle: TextStyle(
+      color: Colors.white,
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+    ),
+    enablePulseAnimation: true,
+    pulseColor: Colors.orange,
   ),
   vertexColor: Colors.blue,
   borderColor: Colors.red,
@@ -158,24 +171,26 @@ flutter run
 
 #### 主要参数
 
-| 参数                | 类型                       | 默认值                     | 说明                     |
-| ------------------- | -------------------------- | -------------------------- | ------------------------ |
-| `image`             | `ui.Image?`                | `null`                     | 背景图片对象             |
-| `imageProvider`     | `ImageProvider?`           | `null`                     | 图片提供者               |
-| `width`             | `double?`                  | `null`                     | 组件宽度（可选，自适应） |
-| `height`            | `double?`                  | `null`                     | 组件高度（可选，自适应） |
-| `backgroundColor`   | `Color`                    | `Colors.transparent`       | 背景颜色                 |
-| `rectangle`         | `QuadAnnotation?`          | `null`                     | 初始四边形               |
-| `onVerticesChanged` | `OnVerticesChanged?`       | `null`                     | 顶点变化回调             |
-| `breathing`         | `BreathingAnimation`       | `BreathingAnimation()`     | 呼吸动画配置             |
-| `magnifier`         | `MagnifierConfiguration`   | `MagnifierConfiguration()` | 放大镜配置               |
-| `vertexRadius`      | `double`                   | `8.0`                      | 顶点半径                 |
-| `borderWidth`       | `double`                   | `2.0`                      | 边框宽度                 |
-| `vertexColor`       | `Color`                    | `Colors.white`             | 顶点颜色                 |
-| `borderColor`       | `Color`                    | `Colors.white`             | 边框颜色                 |
-| `autoDetect`        | `bool`                     | `true`                     | 是否自动检测矩形         |
-| `preview`           | `bool`                     | `false`                    | 是否为预览模式           |
-| `controller`        | `QuadAnnotatorController?` | `null`                     | 外部控制器               |
+| 参数                | 类型                           | 默认值                     | 说明                     |
+| ------------------- | ------------------------------ | -------------------------- | ------------------------ |
+| `image`             | `ui.Image?`                    | `null`                     | 背景图片对象             |
+| `imageProvider`     | `ImageProvider?`               | `null`                     | 图片提供者               |
+| `width`             | `double?`                      | `null`                     | 组件宽度（可选，自适应） |
+| `height`            | `double?`                      | `null`                     | 组件高度（可选，自适应） |
+| `backgroundColor`   | `Color`                        | `Colors.transparent`       | 背景颜色                 |
+| `rectangle`         | `QuadAnnotation?`              | `null`                     | 初始四边形               |
+| `onVerticesChanged` | `OnVerticesChanged?`           | `null`                     | 顶点变化回调             |
+| `breathing`         | `BreathingAnimation`           | `BreathingAnimation()`     | 呼吸动画配置             |
+| `magnifier`         | `MagnifierConfiguration`       | `MagnifierConfiguration()` | 放大镜配置               |
+| `fineAdjustment`    | `FineAdjustmentConfiguration?` | `null`                     | 精调模式配置             |
+| `tutorial`          | `TutorialConfiguration?`       | `null`                     | 教程系统配置             |
+| `vertexRadius`      | `double`                       | `8.0`                      | 顶点半径                 |
+| `borderWidth`       | `double`                       | `2.0`                      | 边框宽度                 |
+| `vertexColor`       | `Color`                        | `Colors.white`             | 顶点颜色                 |
+| `borderColor`       | `Color`                        | `Colors.white`             | 边框颜色                 |
+| `autoDetect`        | `bool`                         | `true`                     | 是否自动检测矩形         |
+| `preview`           | `bool`                         | `false`                    | 是否为预览模式           |
+| `controller`        | `QuadAnnotatorController?`     | `null`                     | 外部控制器               |
 
 ### QuadAnnotation
 
@@ -275,6 +290,68 @@ QuadAnnotatorBox(
 | `edgeOffset`           | `Offset`                  | `Offset(20.0, 20.0)`               | 二维边缘偏移向量 |
 | `shape`                | `MagnifierShape`          | `MagnifierShape.circle`            | 放大镜形状       |
 
+### TutorialConfiguration 配置
+
+教程配置类，用于控制交互式教程系统的外观和行为。
+
+```dart
+QuadAnnotatorBox(
+  tutorial: const TutorialConfiguration(
+    enabled: true,
+    autoStart: false,
+    overlayColor: Color(0xCC000000),
+    skipButtonText: 'Skip',
+    hintStyle: TextStyle(
+      color: Colors.white,
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+    ),
+    hintBackgroundColor: Colors.transparent,
+    spotlightPadding: 20.0,
+    startDelay: Duration(milliseconds: 1000),
+    stepInterval: Duration(milliseconds: 800),
+    enablePulseAnimation: true,
+    pulseColor: Colors.orange,
+    stepTexts: {
+      TutorialStep.dragVertex: 'Drag the highlighted vertex to adjust the quadrilateral shape.',
+      TutorialStep.longPressVertex: 'Long press the highlighted vertex to enter precision mode.',
+      // ... 其他步骤文本
+    },
+  ),
+)
+```
+
+#### TutorialConfiguration 参数
+
+| 参数                         | 类型                        | 默认值                         | 说明                   |
+| ---------------------------- | --------------------------- | ------------------------------ | ---------------------- |
+| `enabled`                    | `bool`                      | `true`                         | 是否启用教程系统       |
+| `autoStart`                  | `bool`                      | `false`                        | 是否自动开始教程       |
+| `overlayColor`               | `Color`                     | `Color(0xCC000000)`            | 遮罩层颜色             |
+| `skipButtonText`             | `String`                    | `'Skip'`                       | 跳过按钮文本           |
+| `skipButtonStyle`            | `ButtonStyle?`              | `null`                         | 跳过按钮样式           |
+| `hintStyle`                  | `TextStyle`                 | 白色 16 号字体                 | 引导提示文本样式       |
+| `hintBackgroundColor`        | `Color`                     | `Colors.transparent`           | 引导提示背景颜色       |
+| `hintBorderRadius`           | `double`                    | `8.0`                          | 引导提示圆角半径       |
+| `hintPadding`                | `EdgeInsets`                | `EdgeInsets.zero`              | 引导提示内边距         |
+| `hintContainerMargin`        | `double`                    | `20.0`                         | 引导提示容器边距       |
+| `hintEstimatedHeight`        | `double`                    | `150.0`                        | 引导提示容器预估高度   |
+| `connectionLineLength`       | `double`                    | `60.0`                         | 连接线长度             |
+| `iconSize`                   | `double`                    | `56.0`                         | 图标尺寸               |
+| `lineToIconDistance`         | `double`                    | `20.0`                         | 连接线到图标的间距     |
+| `iconToTextDistance`         | `double`                    | `12.0`                         | 图标到文本的间距       |
+| `spotlightPadding`           | `double`                    | `20.0`                         | 聚光灯边距             |
+| `spotlightAnimationDuration` | `Duration`                  | `Duration(milliseconds: 800)`  | 聚光灯动画持续时间     |
+| `highlightBorderColor`       | `Color`                     | `Colors.orange`                | 高亮边框颜色           |
+| `highlightBorderWidth`       | `double`                    | `3.0`                          | 高亮边框宽度           |
+| `enablePulseAnimation`       | `bool`                      | `true`                         | 是否启用脉冲动画       |
+| `pulseColor`                 | `Color`                     | `Colors.orange`                | 脉冲动画颜色           |
+| `pulseAnimationDuration`     | `Duration`                  | `Duration(milliseconds: 2000)` | 脉冲动画持续时间       |
+| `startDelay`                 | `Duration`                  | `Duration(milliseconds: 1000)` | 引导开始的延迟时间     |
+| `stepInterval`               | `Duration`                  | `Duration(milliseconds: 800)`  | 引导步骤之间的间隔时间 |
+| `stepTexts`                  | `Map<TutorialStep, String>` | 默认英文文本                   | 每个步骤的引导文本     |
+| `stepSpotlightPadding`       | `Map<TutorialStep, double>` | 各步骤默认边距                 | 每个步骤的聚光灯边距   |
+
 ### FineAdjustmentConfiguration 配置
 
 精调模式配置类，用于控制精调模式的行为和虚拟方向键。
@@ -330,6 +407,40 @@ QuadAnnotatorBox(
 - `FineAdjustmentMode.longPress` - 仅支持长按进入精调模式
 - `FineAdjustmentMode.doubleTap` - 仅支持双击进入精调模式
 - `FineAdjustmentMode.both` - 同时支持长按和双击进入精调模式
+
+### QuadAnnotatorController 控制器
+
+控制器类，用于外部控制四边形标注组件的行为。
+
+```dart
+final controller = QuadAnnotatorController();
+
+QuadAnnotatorBox(
+  controller: controller,
+  // ... 其他配置
+)
+
+// 获取当前顶点坐标（图片坐标系）
+List<Point<double>>? vertices = controller.getImageVertices();
+
+// 重置四边形到初始状态
+controller.reset();
+
+// 检查是否正在拖拽
+bool isDragging = controller.isDragging();
+
+// 手动启动教程
+controller.startTutorial();
+```
+
+#### QuadAnnotatorController 方法
+
+| 方法                 | 返回类型               | 说明                   |
+| -------------------- | ---------------------- | ---------------------- |
+| `getImageVertices()` | `List<Point<double>>?` | 获取图片坐标系中的顶点 |
+| `reset()`            | `void`                 | 重置四边形到初始状态   |
+| `isDragging()`       | `bool`                 | 检查是否正在拖拽       |
+| `startTutorial()`    | `void`                 | 手动启动教程系统       |
 
 ### 事件回调
 
