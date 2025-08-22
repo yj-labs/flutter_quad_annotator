@@ -217,6 +217,12 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   /// 获取实际使用的高度
   late double _actualHeight;
 
+  /// 上一次的实际宽度（用于检测尺寸变化）
+  double? _previousActualWidth;
+
+  /// 上一次的实际高度（用于检测尺寸变化）
+  double? _previousActualHeight;
+
   /// 获取图片信息（懒加载）
   /// 根据图片和容器的长宽比自动选择最佳适配方式
   /// 返回包含真实尺寸和显示信息的图片信息对象
@@ -493,6 +499,10 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
       widget.controller!.onStartTutorial = () => _startTutorialFromController();
     }
 
+    // 初始化尺寸变化检测变量
+    _previousActualWidth = null;
+    _previousActualHeight = null;
+
     // 初始化呼吸灯动画控制器
     _breathingController = AnimationController(
       duration: widget.breathing.duration,
@@ -560,8 +570,12 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
     //   _initializeRectangle();
     // }
 
-    // 检查容器尺寸是否发生变化（如屏幕旋转）
-    _handleSizeChange();
+    // 检查是否需要处理尺寸变化（延迟到下一帧检查实际尺寸）
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _handleSizeChange();
+      }
+    });
   }
 
   /// 触发顶点变化回调
@@ -574,6 +588,16 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
   /// 处理组件尺寸变化时的四边形位置调整
   /// 当容器尺寸发生变化时，保持四边形在图片中的相对位置不变
   void _handleSizeChange() {
+    // 检查实际尺寸是否发生变化
+    bool sizeChanged = _previousActualWidth != _actualWidth ||
+        _previousActualHeight != _actualHeight;
+    if (!sizeChanged) {
+      return;
+    }
+    // 更新保存的尺寸
+    _previousActualWidth = _actualWidth;
+    _previousActualHeight = _actualHeight;
+
     // 如果图片还未加载或矩形还未初始化，跳过处理
     if (_loadedImage == null || _rectangle == null) {
       return;
@@ -591,6 +615,8 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
         _restoreQuadrilateralPosition(savedImageCoordinates);
         // 如果当前处于方向键精调模式且显示放大镜，需要更新放大镜位置
         _updateMagnifierPositionAfterSizeChange();
+        // 强制重建以更新引导层位置（修复步骤1、2、3横屏切换问题）
+        setState(() {});
       }
     });
   }
@@ -1588,16 +1614,9 @@ extension _TutorialHandlers on _QuadAnnotatorBoxState {
         _isInitialized &&
         _rectangle != null) {
       // 延迟开始引导，确保UI已经渲染完成
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          Timer(
-              widget.tutorial?.startDelay ?? const Duration(milliseconds: 500),
-              () {
-            if (mounted) {
-              startDragVertexTutorial();
-            }
-          });
-        }
+      Timer(widget.tutorial?.startDelay ?? const Duration(milliseconds: 500),
+          () {
+        startDragVertexTutorial();
       });
     }
   }
