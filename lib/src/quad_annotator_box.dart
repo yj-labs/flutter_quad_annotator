@@ -420,6 +420,7 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
             Positioned(
               top: 20,
               left: 20,
+              right: 20, // 添加右边距，限制宽度
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -438,6 +439,9 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
+                  maxLines: 3, // 允许最多3行显示
+                  softWrap: true, // 启用软换行
+                  overflow: TextOverflow.visible, // 文本溢出时可见
                 ),
               ),
             ),
