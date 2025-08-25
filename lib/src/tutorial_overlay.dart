@@ -423,8 +423,8 @@ class _SimpleTutorialOverlayState extends State<SimpleTutorialOverlay>
   /// 构建跳过按钮
   Widget _buildSkipButton() {
     return Positioned(
-      bottom: 50,
-      right: 20,
+      bottom: widget.config.skipButtonMargin,
+      right: widget.config.skipButtonMargin,
       child: Material(
         color: Colors.transparent,
         child: TextButton(

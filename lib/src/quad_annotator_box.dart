@@ -418,9 +418,9 @@ class _QuadAnnotatorBoxState extends State<QuadAnnotatorBox>
           // 精调模式提示（仅在拖拽精调模式下显示）
           if (_isFineAdjustmentMode && !_isDPadMode)
             Positioned(
-              top: 20,
-              left: 20,
-              right: 20, // 添加右边距，限制宽度
+              top: widget.fineAdjustment?.hintMargin ?? 20,
+              left: widget.fineAdjustment?.hintMargin ?? 20,
+              right: widget.fineAdjustment?.hintMargin ?? 20,
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,

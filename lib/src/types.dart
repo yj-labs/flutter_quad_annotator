@@ -265,6 +265,9 @@ class FineAdjustmentConfiguration {
   /// 精调模式背景色
   final Color hintBackgroundColor;
 
+  /// 精调模式提示距离屏幕边缘的距离
+  final double hintMargin;
+
   /// 精调模式类型
   final FineAdjustmentMode mode;
 
@@ -282,6 +285,7 @@ class FineAdjustmentConfiguration {
       fontWeight: FontWeight.w500,
     ),
     this.hintBackgroundColor = const Color(0x88000000),
+    this.hintMargin = 20.0,
     this.mode = FineAdjustmentMode.both,
     this.dpadConfig = const VirtualDPadConfiguration(),
   });
@@ -407,6 +411,9 @@ class TutorialConfiguration {
   /// 跳过按钮样式
   final ButtonStyle? skipButtonStyle;
 
+  /// 跳过按钮距离屏幕边缘的距离
+  final double skipButtonMargin;
+
   /// 引导提示样式
   final TextStyle hintStyle;
 
@@ -477,6 +484,7 @@ class TutorialConfiguration {
     this.overlayColor = const Color(0xCC000000),
     this.skipButtonText = 'Skip',
     this.skipButtonStyle,
+    this.skipButtonMargin = 20.0,
     this.hintStyle = const TextStyle(
       color: Colors.white,
       fontSize: 16,
