@@ -5,6 +5,62 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2025-09-01
+
+### 🔧 **Repository Updates**
+
+- **Updated:** Repository URL from `YongTaiSin/flutter_quad_annotator` to `yj-labs/flutter_quad_annotator`
+- **Updated:** Homepage and issue tracker URLs to reflect new repository location
+- **Updated:** Online demo URL to new GitHub Pages location
+- **Updated:** Contact email address
+- **Updated:** Clone instructions in README with new repository URL
+
+### 📚 **Documentation**
+
+- **Maintained:** All existing functionality and API remain unchanged
+- **Updated:** Links and references to point to new repository location
+- **Enhanced:** Contact information for better community support
+
+## [0.3.2] - 2025-08-25
+
+### ✨ **New Configuration Features**
+
+- **NEW:** Added configurable positioning for tutorial skip button
+- **NEW:** Added configurable positioning for fine adjustment mode hint text
+- **Enhanced:** Skip button and hint text positions no longer hardcoded
+
+### 🛠️ **API Enhancements**
+
+- Added `skipButtonMargin` parameter to `TutorialConfiguration`
+- Added `hintMargin` parameter to `FineAdjustmentConfiguration`
+- Support for flexible UI element positioning based on screen edge distances
+
+### 🎯 **Customization Improvements**
+
+- **Flexible Positioning:** Control distance from screen edges for UI elements
+- **Design Freedom:** Adapt to different app layouts and design requirements
+- **Responsive Design:** Better support for various screen sizes and orientations
+
+## [0.3.1] - 2025-08-25
+
+### 🐛 **Text Display Fixes**
+
+- **Fixed:** Fine adjustment mode hint text not wrapping properly for long content
+- **Fixed:** Text overflow issues when hint text exceeds container width
+- **Enhanced:** Multi-line text support with proper line breaking
+
+### 🔧 **Technical Improvements**
+
+- **Optimized:** Text widget configuration with `maxLines: 3` for reliable multi-line display
+- **Enhanced:** Width constraints for proper text wrapping behavior
+- **Improved:** Text rendering consistency across different Flutter versions
+
+### 📱 **User Experience**
+
+- **Better Readability:** Long hint texts now display properly across multiple lines
+- **Responsive Text:** Automatic text wrapping based on available container width
+- **Visual Polish:** Improved text layout and presentation
+
 ## [0.3.0] - 2025-08-22
 
 ### 🎯 **Tutorial System Enhancement**

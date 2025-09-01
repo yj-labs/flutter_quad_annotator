@@ -43,7 +43,7 @@
 
 ### 🌐 在线演示
 
-**[点击这里体验在线演示](https://yongtaisin.github.io/flutter_quad_annotator/)**
+**[点击这里体验在线演示](https://yj-labs.github.io/flutter_quad_annotator/)**
 
 _或者运行本地示例应用查看完整功能演示_
 
@@ -506,7 +506,7 @@ A: 可以设置 `autoDetect: false` 禁用自动检测，或者提供自定义�
 
 ```bash
 # 克隆仓库
-git clone https://github.com/YongTaiSin/flutter_quad_annotator.git
+git clone https://github.com/yj-labs/flutter_quad_annotator.git
 cd flutter_quad_annotator
 
 # 安装依赖
@@ -539,9 +539,9 @@ flutter run
 
 ## 📞 联系我们
 
-- **Issues**: [GitHub Issues](https://github.com/YongTaiSin/flutter_quad_annotator/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/YongTaiSin/flutter_quad_annotator/discussions)
-- **Email**: your.email@example.com
+- **Issues**: [GitHub Issues](https://github.com/yj-labs/flutter_quad_annotator/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yj-labs/flutter_quad_annotator/discussions)
+- **Email**: yongtaisin@qq.com
 
 ---
 
